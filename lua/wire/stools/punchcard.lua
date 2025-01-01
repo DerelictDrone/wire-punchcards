@@ -4,7 +4,10 @@ WireToolSetup.open( "punchcard", "Punchcard", "gmod_wire_punchcard", nil, "Punch
 if ( CLIENT ) then
 	language.Add( "Tool.wire_punchcard.name", "Punchcard(Wire)" )
 	language.Add( "Tool.wire_punchcard.desc", "Spawns a Punchcard!" )
-	TOOL.Information = { { name = "left", text = "Create a Punchcard" } }
+	TOOL.Information = {
+		{ name = "left", text = "Create a Punchcard" },
+		{ name = "right", text = "Edit Punchcard" }
+	}
 end
 WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
@@ -19,23 +22,28 @@ if SERVER then
 	-- Uses default WireToolObj:MakeEnt's WireLib.MakeWireEnt function
 end
 
-
-if CLIENT then
-	Wire_PunchCardUI = Wire_PunchCardUI or vgui.Create("DFrame",nil,"PunchCardUI")
-	Wire_PunchCardUI:Hide()
-	-- Interprets punch card data and then opens the UI
-	function Wire_PunchCardUI:LoadCard(Data)
-		
-	end
-end
-
-local PunchCardUI = Wire_PunchCardUI
-
 function TOOL:RightClick( trace )
 	if trace.Entity:IsPlayer() then return false end
-	if (CLIENT) then return true end
-
-	local ply = self:GetOwner()
+	if trace.Entity:GetClass() ~= "gmod_wire_punchcard" then
+		return false
+	end
+	if CLIENT then return true end
+	local ent = trace.Entity
+	local Columns = ent.Columns -- aka bits
+	local Rows = ent.Rows
+	local Data,Patches = ent.Data,ent.Patches
+	net.Start("wire_punchcard_data")
+		net.WriteEntity(ent)
+		net.WriteUInt(Columns,16)
+		net.WriteUInt(Rows,16)
+		net.WriteString(ent.pc_model)
+		for _,i in ipairs(Data) do
+			net.WriteUInt(i,Columns)
+		end
+		for _,i in ipairs(Patches) do
+			net.WriteUInt(i,Columns)
+		end
+	net.Send(self:GetOwner())
 	return true
 end
 
