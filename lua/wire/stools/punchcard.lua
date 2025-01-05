@@ -12,7 +12,7 @@ end
 WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
 
-TOOL.ClientConVar[ "model" ] = "models/jaanus/wiretool/wiretool_gate.mdl"
+TOOL.ClientConVar[ "model" ] = "models/hunter/plates/plate025x05.mdl"
 TOOL.ClientConVar[ "pc_model" ] = "ibm5081"
 if SERVER then
 	function TOOL:GetConVars()
@@ -22,32 +22,54 @@ if SERVER then
 	-- Uses default WireToolObj:MakeEnt's WireLib.MakeWireEnt function
 end
 
+TOOL.NoLeftOnClass = true
+
+if SERVER then
+-- Copy of the function from wiretoolobj / wiretoollib but with the automatic weld+nocollide part removed.
+	-- this function needs to return true if the tool beam should be "fired"
+	function WireToolObj:LeftClick_PostMake( ent, ply, trace )
+		if ent == true then return true end
+		if ent == nil or ent == false or not ent:IsValid() then return false end
+
+		-- Parenting
+		local nocollide, const
+		if self:GetClientNumber( "parent" ) == 1 then
+			if (trace.Entity:IsValid()) then
+				-- Nocollide the gate to the prop to make adv duplicator (and normal duplicator) find it
+				if (not self.ClientConVar.noclip or self:GetClientNumber( "noclip" ) == 1) then
+					nocollide = constraint.NoCollide( ent, trace.Entity, 0,trace.PhysicsBone )
+				end
+
+				ent:SetParent( trace.Entity )
+			end
+		end
+
+		undo.Create( self.WireClass )
+			undo.AddEntity( ent )
+			if (const) then undo.AddEntity( const ) end
+			if (nocollide) then undo.AddEntity( nocollide ) end
+			undo.SetPlayer( self:GetOwner() )
+		undo.Finish()
+
+		ply:AddCleanup( self.WireClass, ent )
+
+		if self.PostMake then self:PostMake(ent, ply, trace) end
+		duplicator.ApplyEntityModifiers(ply, ent)
+
+		return true
+	end
+end
+
 function TOOL:RightClick( trace )
 	if trace.Entity:IsPlayer() then return false end
 	if trace.Entity:GetClass() ~= "gmod_wire_punchcard" then
 		return false
 	end
 	if CLIENT then return true end
-	local ent = trace.Entity
-	local Columns = ent.Columns -- aka bits
-	local Rows = ent.Rows
-	local Data,Patches = ent.Data,ent.Patches
-	net.Start("wire_punchcard_data")
-		net.WriteEntity(ent)
-		net.WriteUInt(Columns,16)
-		net.WriteUInt(Rows,16)
-		net.WriteString(ent.pc_model)
-		for _,i in ipairs(Data) do
-			net.WriteUInt(i,Columns)
-		end
-		for _,i in ipairs(Patches) do
-			net.WriteUInt(i,Columns)
-		end
-	net.Send(self:GetOwner())
+	SendPunchcard(trace.Entity,self:GetOwner(),true)
 	return true
 end
 
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard")
-	ModelPlug_AddToCPanel(panel, "gate", "wire_punchcard", nil, 4)
 end

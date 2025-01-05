@@ -10,8 +10,9 @@ function ENT:Initialize()
 	self:SetMoveType(MOVETYPE_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
 	self:SetUseType(SIMPLE_USE)
-
 	self:SetOverlayText("IBM 5081 Punch Card")
+	self:SetModelScale(0.5)
+	self:SetMaterial("punch_card")
 end
 
 local Models = {
@@ -56,6 +57,35 @@ function ENT:Setup(model)
 		self.Data[i] = 0
 		self.Patches[i] = 0
 	end
+	self.MaxValue = math.ldexp(1,self.Columns)-1
+end
+
+function ENT:Use(actv,call,type,data)
+	if actv:IsPlayer() and actv:KeyDown(IN_WALK) then
+		return SendPunchcard(self,actv,false)
+	end
+	if self:IsPlayerHolding() then return end
+	if self.InDevice then
+		-- alert the device rq that the user has just grabbed us
+		if self.Device.MediaGrabbed then
+			-- if grab returns true we're allowed to remove the device
+			if not self.Device:MediaGrabbed(self) then return end
+		end
+	end
+	actv:PickupObject(self)
+end
+
+function ENT:MediaConnected(device)
+	if self:IsPlayerHolding() then
+		self:ForcePlayerDrop()
+	end
+	self.InDevice = true
+	self.Device = device
+end
+
+function ENT:MediaDisconnected(device)
+	self.InDevice = false
+	self.Device = nil
 end
 
 function ENT:ReadRow(row)
@@ -66,7 +96,20 @@ function ENT:ReadPatches(row)
 	return self.Patches[row]
 end
 
+-- Just apply a number to a row outright, clamps first
+function ENT:PunchRow(value,row,silent)
+	value = math.floor(value)
+	if value <= 0 then return end
+	if self.Data[row] then
+		self.Data[row] = bit.bor(self.Data[row],math.Clamp(value,0,self.MaxValue))
+	end
+	if not silent then
+		self:EmitSound(string.format("paper-punch-0%d.wav",math.floor(math.random()*7)+1))
+	end
+end
+
 function ENT:Punch(column,row,silent)
+	if column == 0 then return end
 	if self.Data[row] then
 		self.Data[row] = bit.bor(self.Data[row],math.ldexp(1,column-1))
 		if not silent then

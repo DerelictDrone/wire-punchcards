@@ -5,7 +5,7 @@ Wire_PunchCardUI:Hide()
 Wire_PunchCardUI.Renderers = {}
 
 -- Interprets punch card data and then opens the UI
-function Wire_PunchCardUI:LoadCard(Entity,Model,Columns,Rows,Data,Patches)
+function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches)
 	if self.Card then
 		self.Card:Remove()
 	end
@@ -13,37 +13,48 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Columns,Rows,Data,Patches)
 	-- since they don't allow clicking on shapes lets just quickly write our own handler
 	local mx,my = 0,0
 	function self.Card:OnCursorMoved(x,y)
-		-- print(mx,my)
 		mx,my = x,y
 	end
 	function self.Card:OnMouseReleased(mkey)
 		local elem = self:GetChildrenInRect(mx-1,my-1,2,2)[1]
 		if not elem then return end
 		if mkey == MOUSE_LEFT then
-			elem:DoClick()
+			if elem.DoClick then
+				elem:DoClick()
+			end
 		end
 		if mkey == MOUSE_RIGHT then
-			elem:DoRightClick()
+			if elem.DoRightClick then
+				elem:DoRightClick()
+			end
 		end
 	end
-	function self.Card.Punch(row,col)
-		net.Start("wire_punchcard_write")
-			net.WriteEntity(Entity)
-			net.WriteUInt(col+1,16)
-			net.WriteUInt(row+1,16)
-			net.WriteUInt(1,2)
-		net.SendToServer()
-	end
-	function self.Card.Patch(col,row)
-		net.Start("wire_punchcard_write")
-			net.WriteEntity(Entity)
-			net.WriteUInt(col+1,16)
-			net.WriteUInt(row+1,16)
-			net.WriteUInt(2,2)
-		net.SendToServer()
+	if Writable then
+		function self.Card.Punch(row,col)
+			net.Start("wire_punchcard_write")
+				net.WriteEntity(Entity)
+				net.WriteUInt(col+1,16)
+				net.WriteUInt(row+1,16)
+				net.WriteUInt(1,2)
+			net.SendToServer()
+		end
+		function self.Card.Patch(col,row)
+			net.Start("wire_punchcard_write")
+				net.WriteEntity(Entity)
+				net.WriteUInt(col+1,16)
+				net.WriteUInt(row+1,16)
+				net.WriteUInt(2,2)
+			net.SendToServer()
+		end
+	else
+		-- noop these
+		function self.Card.Punch()
+		end
+		function self.Card.Patch()
+		end
 	end
 	local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
-	renderer(Columns,Rows,Data,Patches,self.Card)
+	renderer(Columns,Rows,Data,Patches,self.Card,Writable)
 	self.Card:SetSize(0,0)
 	self.Card:SizeToChildren(true,true)
 	self.Card:SetPos(2,30)
@@ -61,10 +72,11 @@ local white = Color(255,255,255,255)
 local gray = Color(128,128,128,255)
 local black = Color(0,0,0,255)
 
-Wire_PunchCardUI.Renderers["ibm5081"] = function(Columns,Rows,Data,Patches,Panel)
+Wire_PunchCardUI.Renderers["ibm5081"] = function(Columns,Rows,Data,Patches,Panel,Writable)
 	local xsize,ysize = 15,30
 	local xpad,ypad = 5,15
-	local function createPunchable(digit,row)
+	local createPunchable
+	function createPunchable(digit,row)
 		local holder = vgui.Create("DShape",Panel)
 		holder:SetType("Rect")
 		holder:SetSize(xsize,ysize)
@@ -82,13 +94,15 @@ Wire_PunchCardUI.Renderers["ibm5081"] = function(Columns,Rows,Data,Patches,Panel
 			holder.Patched = true
 			holder.Punched = false
 		end
-		function holder:DoClick()
-			self:SetPunched()
-			Panel.Punch(digit,row)
-		end
-		function holder:DoRightClick()
-			self:SetPatched()
-			Panel.Patch(digit,row)
+		if Writable then
+			function holder:DoClick()
+				self:SetPunched()
+				Panel.Punch(digit,row)
+			end
+			function holder:DoRightClick()
+				self:SetPatched()
+				Panel.Patch(digit,row)
+			end
 		end
 		t:SetText(tostring(digit))
 		t:SetColor(black)
@@ -99,7 +113,6 @@ Wire_PunchCardUI.Renderers["ibm5081"] = function(Columns,Rows,Data,Patches,Panel
 	local masks = {}
 	for i=1,Columns,1 do
 		masks[i] = math.ldexp(1,i-1)
-		print(masks[i])
 	end
 	local startx,starty = 0,((ysize+ypad)*2)+5
 	local x,y = startx,starty
@@ -140,6 +153,7 @@ net.Receive("wire_punchcard_data",function (len,ply)
 	local Entity = net.ReadEntity()
 	local Columns = net.ReadUInt(16)
 	local Rows = net.ReadUInt(16)
+	local Writable = net.ReadBool()
 	local Model = net.ReadString()
 	local Data = {}
 	local Patches = {}
@@ -149,5 +163,5 @@ net.Receive("wire_punchcard_data",function (len,ply)
 	for i=1,Rows,1 do
 		table.insert(Patches,net.ReadUInt(Columns))
 	end
-	Wire_PunchCardUI:LoadCard(Entity,Model,Columns,Rows,Data,Patches)
+	Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches)
 end)
