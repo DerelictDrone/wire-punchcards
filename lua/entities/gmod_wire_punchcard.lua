@@ -15,9 +15,8 @@ function ENT:Initialize()
 	self:SetMaterial("punch_card")
 end
 
-local Models = {
-	ibm5081 = {Columns = 10, Rows = 80}
-}
+Wire_PunchCardModels = Wire_PunchCardModels or {}
+local Models = Wire_PunchCardModels
 
 util.AddNetworkString("wire_punchcard_data")
 util.AddNetworkString("wire_punchcard_write")
@@ -36,6 +35,9 @@ net.Receive("wire_punchcard_write",function(len,ply)
 			ent:Patch(Row,Column)
 			return
 		end
+		if Action == 0 then
+			ent.PunchName = net.ReadString() or ""
+		end
 	else
 		return
 	end
@@ -46,13 +48,13 @@ end
 -- end)
 
 
-function ENT:Setup(model)
+function ENT:Setup(pc_model)
 	self.Patches = {} -- Patched areas, once patched the patch will remain, even if punched again. For flavor
 	self.Data = {} -- Packed data, 1 number per row, unpack using bit lib
-	model = model or "ibm5081"
-	self.pc_model = model
-	self.Columns = Models[model].Columns
-	self.Rows = Models[model].Rows
+	pc_model = pc_model or "ibm5081"
+	self.pc_model = pc_model
+	self.Columns = Models[pc_model].Columns
+	self.Rows = Models[pc_model].Rows
 	for i=1,self.Rows,1 do
 		self.Data[i] = 0
 		self.Patches[i] = 0

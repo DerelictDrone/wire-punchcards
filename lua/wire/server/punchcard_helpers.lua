@@ -9,6 +9,7 @@ function SendPunchcard(card,ply,writable)
 	net.WriteUInt(Rows,16)
 	net.WriteBool(writable and true or false) -- write allowed
 	net.WriteString(card.pc_model)
+	net.WriteString(card.pc_name or "")
 	for _,i in ipairs(Data) do
 		net.WriteUInt(i,Columns)
 	end

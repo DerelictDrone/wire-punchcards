@@ -16,7 +16,7 @@ TOOL.ClientConVar[ "model" ] = "models/punch_card/punch_card.mdl"
 TOOL.ClientConVar[ "pc_model" ] = "ibm5081"
 if SERVER then
 	function TOOL:GetConVars()
-		-- return self:GetClientString( "type" )
+		return self:GetClientInfo("pc_model")
 	end
 
 	-- Uses default WireToolObj:MakeEnt's WireLib.MakeWireEnt function

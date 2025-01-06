@@ -45,12 +45,6 @@ if game.SinglePlayer() then
 	end
 end
 
-function TOOL:RightClick( trace )
-	if trace.Entity:IsPlayer() then return false end
-	if CLIENT then return true end
-	return true
-end
-
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_reader")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_reader", nil, 4)

@@ -46,18 +46,6 @@ if game.SinglePlayer() then
 	end
 end
 
-function TOOL:RightClick( trace )
-	if trace.Entity:IsPlayer() then return false end
-	print(trace.Entity:GetClass())
-	if trace.Entity:GetClass() == "gmod_wire_punchcard_writer" then
-		trace.Entity.ViewHitboxes = not trace.Entity.ViewHitboxes
-		print(trace.Entity.ViewHitboxes)
-		return false
-	end
-	if CLIENT then return true end
-	return true
-end
-
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_writer")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_writer", nil, 4)
