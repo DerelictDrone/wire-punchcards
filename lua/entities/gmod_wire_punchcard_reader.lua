@@ -275,7 +275,6 @@ function ENT:TriggerInput(iname, value)
 end
 
 function ENT:TriggerOutputs(oname,value)
-	WireLib.TriggerOutput(self, "Punchcard Inserted")
 	if oname == "Currently Shifting" then
 		WireLib.TriggerOutput(self, "Currently Shifting", value)
 	end
