@@ -63,6 +63,8 @@ if CLIENT then
 				t:SetColor(black)
 				t:SizeToContents()
 				t:Center()
+				local tx,ty = t:GetPos()
+				t:SetPos(tx+1,ty)
 			end
 			return holder
 		end
@@ -113,14 +115,17 @@ if CLIENT then
 			local x,y = startx,starty
 			for row=1,Rows,1 do
 				local label = vgui.Create("DLabel",Panel)
-				label:SetPos(x,y)
-				label:SetText(tostring(row))
+				local rstr = tostring(row)
+				label:SetText(rstr)
+				label:SizeToContents()
+				local lx = label:GetSize()
+				label:SetPos(((3-#rstr)+x)-(lx/4),y)
 				label:SetColor(black)
 				x = x + xsize + xpad
 			end
 		end
-		createRowIdentifier(startx+5,starty+(ysize)-5) -- Start inbetween column 1 & 2
-		createRowIdentifier(startx+5,starty+((ysize+ypad)*(Columns-0.35))) -- Start just after last column
+		createRowIdentifier(startx+5,starty+(ysize)) -- Start inbetween column 1 & 2
+		createRowIdentifier(startx+5,starty+((ysize+ypad)*(Columns-0.3))) -- Start just after last column
 		local nameLabel = vgui.Create("DLabel",Panel)
 		nameLabel:SetPos(startx+5+((xsize+xpad)*10),starty+(ysize+ypad)*(Columns))
 		nameLabel:SetText("IBM [5081]")
