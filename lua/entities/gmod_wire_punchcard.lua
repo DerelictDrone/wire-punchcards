@@ -124,7 +124,7 @@ end
 function ENT:Patch(row,column,silent)
 	if self.Data[row] then
 		self.Patches[row] = bit.bor(self.Patches[row],math.ldexp(1,column-1))
-		self.Data[row] = bit.band(self.Data[row],bit.bnot(math.ldexp(1,column)-1))
+		self.Data[row] = bit.band(self.Data[row],bit.bnot(math.ldexp(1,column-1)))
 		if not silent then
 			-- no sfx yet
 		end
