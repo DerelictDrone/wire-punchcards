@@ -12,7 +12,7 @@ end
 WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
 
-TOOL.ClientConVar[ "model" ] = "models/hunter/plates/plate025x05.mdl"
+TOOL.ClientConVar[ "model" ] = "models/punch_card/punch_card.mdl"
 TOOL.ClientConVar[ "pc_model" ] = "ibm5081"
 if SERVER then
 	function TOOL:GetConVars()
@@ -27,7 +27,7 @@ TOOL.NoLeftOnClass = true
 if SERVER then
 -- Copy of the function from wiretoolobj / wiretoollib but with the automatic weld+nocollide part removed.
 	-- this function needs to return true if the tool beam should be "fired"
-	function WireToolObj:LeftClick_PostMake( ent, ply, trace )
+	function TOOL:LeftClick_PostMake( ent, ply, trace )
 		if ent == true then return true end
 		if ent == nil or ent == false or not ent:IsValid() then return false end
 

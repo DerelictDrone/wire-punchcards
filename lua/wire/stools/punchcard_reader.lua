@@ -18,6 +18,33 @@ TOOL.ClientConVar[ "model" ] = "models/props_lab/reciever01d.mdl"
 	-- end
 -- end
 
+if CLIENT then
+	function TOOL:Holster()
+		Punchcard_ShowHitboxes = false
+	end
+	function TOOL:Deploy()
+		Punchcard_ShowHitboxes = true
+	end
+end
+
+-- Ugly hack to get it to show in SP too
+if game.SinglePlayer() then
+	function TOOL:Holster()
+		if SERVER then
+			self:GetWeapon():CallOnClient("Holster","")
+			return
+		end
+		Punchcard_ShowHitboxes = false
+	end
+	function TOOL:Deploy()
+		if SERVER then
+			self:GetWeapon():CallOnClient("Deploy","")
+			return
+		end
+		Punchcard_ShowHitboxes = true
+	end
+end
+
 function TOOL:RightClick( trace )
 	if trace.Entity:IsPlayer() then return false end
 	if CLIENT then return true end

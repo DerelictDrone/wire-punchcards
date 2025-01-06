@@ -128,4 +128,20 @@ function ENT:Patch(row,column,silent)
 	end
 end
 
-duplicator.RegisterEntityClass("gmod_wire_punchcard", WireLib.MakeWireEnt, "Model")
+function ENT:BuildDupeInfo()
+	local info = BaseClass.BuildDupeInfo(self) or {}
+	info.pc_model = self.pc_model
+	info.PCardData = self.Data
+	info.PCardPatches = self.Patches
+	return info
+end
+
+function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
+	-- print(self,ent)
+	BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID)
+	ent.pc_model = info.pc_model or "ibm5081"
+	ent.Patches = info.PCardPatches or ent.Patches or {}
+	ent.Data = info.PCardData or ent.Data or {}
+end
+
+duplicator.RegisterEntityClass("gmod_wire_punchcard", WireLib.MakeWireEnt, "Data", "pc_model")

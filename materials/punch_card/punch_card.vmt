@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "punch_card/punch_card"
+ 	"$alphatest" "1"
+}

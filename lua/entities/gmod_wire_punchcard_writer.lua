@@ -30,6 +30,7 @@ end
 
 local drawOffset = Vector(0,0,0)
 function ENT:Draw()
+	self:DrawModel()
 	if Punchcard_ShowHitboxes then
 		local p = self:GetPos()
 		local a = self:GetAngles()
@@ -38,7 +39,6 @@ function ENT:Draw()
 		drawOffset:Rotate(a)
 		render.DrawWireframeBox(p+drawOffset,a,self.MinBox,self.MaxBox)
 	end
-	self:DrawModel()
 end
 
 if CLIENT then return end -- No more client
@@ -94,17 +94,19 @@ function ENT:Think()
 		return
 	end
 	if not IsValid(self.DeviceConstraint) then
-		if self.ReconnectWeld then
-			if self:WeldMedia() then
-				self.ReconnectWeld = false
-				return
-			end
-		end
+		-- if self.ReconnectWeld then
+		-- 	if self:WeldMedia() then
+		-- 		self.ReconnectWeld = false
+		-- 		return
+		-- 	end
+		-- end
+		-- print("Invalid constraint")
+		-- print(self.DeviceConstraint)
 		self:MediaDisconnect()
 		return
 	end
 	-- Cycling logic
-	print("cur",self.MediaCurrentRow, "des", self.MediaDesiredRow)
+	-- print("cur",self.MediaCurrentRow, "des", self.MediaDesiredRow)
 	if self.MediaDesiredRow == self.MediaCurrentRow then
 		if self.MediaMoving then
 			self:TriggerOutputs("Currently Shifting",0)
@@ -127,6 +129,7 @@ function ENT:Think()
 		end
 	end
 	if self.MediaCurrentRow > self.InsertedCard.Rows or self.MediaCurrentRow < 1 then
+		-- print("Done")
 		self:MediaDisconnect()
 		return true
 	end
@@ -138,6 +141,7 @@ end
 -- Helper function for self, lets media know when its been connected
 function ENT:MediaConnect(media)
 	if not IsValid(media) then return end
+	if media.InDevice then return end
 	self.HasCard = true
 	self.InsertedCard = media
 	self.MediaCurrentRow = 1
@@ -157,14 +161,15 @@ end
 
 -- Disconnect the media, calls event handler on media if present.
 function ENT:MediaDisconnect(media)
-	print("Disconnected")
+	-- print("Disconnected")
 	self.HasCard = false
 	if IsValid(self.DeviceConstraint) then
 		self.DeviceConstraint:Remove()
 	end
-	if IsValid(self.Device) and self.Device.MediaDisconnected then
-		self.Device.MediaDisconnected(self)
+	if IsValid(self.InsertedCard) and self.InsertedCard.MediaDisconnected then
+		self.InsertedCard:MediaDisconnected(self)
 	end
+	self.InsertedCard = nil
 	self.MediaMoving = false
 	self:TriggerOutputs("Punchcard Inserted",0)
 	self:TriggerOutputs("Currently Shifting",0)
@@ -177,10 +182,23 @@ function ENT:MediaGrabbed(media)
 	return true
 end
 
-function ENT:WeldMedia()
-	local weld = constraint.Weld(self.InsertedCard,self,0,0,self.Weldforce or 500,true)
-	self.InsertedCard:GetPhysicsObject():Wake()
-	return weld
+function ENT:WeldMedia(recurse)
+	if not IsValid(self.DeviceConstraint) or recurse then
+		self.DeviceConstraint = constraint.Weld(self.InsertedCard,self,0,0,self.WeldForce or 5000,true)
+		-- print(self.DeviceConstraint)
+		self.DeviceConstraint.ConstraintIndex1 = #self.Constraints
+		self.DeviceConstraint.ConstraintIndex2 = #self.InsertedCard.Constraints
+	else
+		if self.DeviceConstraint == false then
+			self.DeviceConstraint = nil
+			return self:WeldMedia(true)
+		end
+		table.remove(self.Constraints,self.DeviceConstraint.ConstraintIndex1)
+		table.remove(self.InsertedCard.Constraints,self.DeviceConstraint.ConstraintIndex2)
+		self.DeviceConstraint:Remove()
+		return self:WeldMedia(true)
+	end
+	self.InsertedCard:PhysWake()
 end
 
 -- Updates position of the object w/ offset(rotated for you), rewelds, and returns the pos
@@ -190,17 +208,11 @@ function ENT:UpdateMediaPosition(offset)
 	self.MediaPositionTemp:Add(self:GetPos())
 	self.MediaPositionTemp:Add(offset or Vector(0,0,0))
 	local physobj = self.InsertedCard:GetPhysicsObject()
-	local alreadyfrozen = not physobj:IsMotionEnabled()
-	local oldConstraint = self.DeviceConstraint
 	self.InsertedCard:SetPos(self.MediaPositionTemp)
 	self.InsertedCard:SetAngles(self:GetMediaAngle())
-	if not IsValid(self.DeviceConstraint) then
-		self.DeviceConstraint = self:WeldMedia(constraint.Weld())
-	end
-	if not alreadyfrozen then
-		physobj:EnableMotion(true)
-	end
-	self.ReconnectWeld = true -- We can't destroy a weld same tick so we have to ask it politely to reweld next tick
+	self:WeldMedia()
+	-- print(self.DeviceConstraint:GetInternalVariable(""))
+	-- self.ReconnectWeld = true -- We can't destroy a weld same tick so we have to ask it politely to reweld next tick
 	self:NextThink(CurTime())
 	return self.MediaPositionTemp
 end
@@ -261,7 +273,7 @@ function ENT:WriteCell(Address, value)
 		self.MediaWriteValue = value
 		return true
 	end
-	return false -- User most likely input a floating point value. Bad user.
+	return false -- User most likely input a floating point address. Bad user.
 end
 
 function ENT:TriggerInput(iname, value)
@@ -287,5 +299,15 @@ function ENT:TriggerOutputs(oname,value)
 		WireLib.TriggerOutput(self, "Punchcard Inserted", value)
 	end
 end
+
+function ENT:BuildDupeInfo()
+	local info = BaseClass.BuildDupeInfo(self) or {}
+	return info
+end
+
+function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
+	BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID)
+end
+
 
 duplicator.RegisterEntityClass("gmod_wire_punchcard_writer", WireLib.MakeWireEnt, "Data")
