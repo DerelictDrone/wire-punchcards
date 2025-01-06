@@ -1,5 +1,13 @@
-Wire_PunchCardModels["ibm5081"] = {Columns = 10, Rows = 80}
-Wire_PunchCardModels["ibm5081op"] = {Columns = 12, Rows = 80}
+Wire_PunchCardModels["ibm5081"] = {
+	Columns = 10,
+	Rows = 80,
+	Description = "A generic 80 row wide 10 column card introduced between 1960 and 1970.\nUses rectangular holes, has no field divisions."
+}
+Wire_PunchCardModels["ibm5081op"] = {
+	Columns = 12,
+	Rows = 80,
+	Description = Wire_PunchCardModels.ibm5081.Description .. "\nThis version allows the empty space above the regular columns to be punched acting as the 11th and 12th columns.\nOtherwise known as Zone Punching or the X,Y rows."
+}
 
 if CLIENT then
 	local white = Color(255,255,255,255)
@@ -8,6 +16,11 @@ if CLIENT then
 	local hidden = Color(0,0,0,0)
 
 	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable)
+		local usertextLabel = vgui.Create("DLabel",Panel)
+		usertextLabel:SetText(Panel.UserText or "")
+		usertextLabel:SetFont("Punchcard_Handwritten")
+		usertextLabel:SizeToContents()
+		usertextLabel:SetColor(black)
 		local xsize,ysize = 15,30
 		local xpad,ypad = 5,15
 		local function createPunchable(digit,row,overpunch)
@@ -88,6 +101,13 @@ if CLIENT then
 			end
 		end
 		createRows(startx,starty,xpad,ypad,Columns,0,false)
+		local textx = x
+		function Panel:UpdateUserText(str)
+			usertextLabel:SetText(str or "")
+			usertextLabel:SizeToContents()
+			local ux,_ = usertextLabel:GetSize()
+			usertextLabel:SetPos((textx/2)-(ux/2))
+		end
 		local function createRowIdentifier(startx,starty)
 			-- not zero indexed
 			local x,y = startx,starty
@@ -119,7 +139,6 @@ if CLIENT then
 	local function ibm5081op(...)
 		return renderer(true,...)
 	end
-	print("Make my day")
 	Wire_PunchCardUI.Renderers["ibm5081"] = ibm5081
 	Wire_PunchCardUI.Renderers["ibm5081op"] = ibm5081op
 end

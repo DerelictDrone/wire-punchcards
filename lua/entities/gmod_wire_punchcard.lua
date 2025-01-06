@@ -36,7 +36,8 @@ net.Receive("wire_punchcard_write",function(len,ply)
 			return
 		end
 		if Action == 0 then
-			ent.PunchName = net.ReadString() or ""
+			ent.pc_usertext = net.ReadString() or ""
+			ent.pc_usertext = ent.pc_usertext:sub(1,48)
 		end
 	else
 		return
@@ -133,6 +134,7 @@ end
 function ENT:BuildDupeInfo()
 	local info = BaseClass.BuildDupeInfo(self) or {}
 	info.pc_model = self.pc_model
+	info.pc_usertext = self.pc_usertext
 	info.PCardData = self.Data
 	info.PCardPatches = self.Patches
 	return info
@@ -142,6 +144,7 @@ function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
 	-- print(self,ent)
 	BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID)
 	ent.pc_model = info.pc_model or "ibm5081"
+	ent.pc_usertext = info.pc_usertext
 	ent.Patches = info.PCardPatches or ent.Patches or {}
 	ent.Data = info.PCardData or ent.Data or {}
 end

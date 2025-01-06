@@ -2,10 +2,48 @@
 Wire_PunchCardUI = Wire_PunchCardUI or vgui.Create("DFrame",nil,"PunchCardUI")
 Wire_PunchCardUI:SetDeleteOnClose(false)
 Wire_PunchCardUI:Hide()
-Wire_PunchCardUI.Renderers = {}
+Wire_PunchCardUI.SetNameButton = Wire_PunchCardUI.SetNameButton or vgui.Create("DButton",Wire_PunchCardUI)
+Wire_PunchCardUI.Renderers = Wire_PunchCardUI.Renderers or {}
+Wire_PunchCardUI.SetNameButton:SetText("Edit Punchcard Name")
+Wire_PunchCardUI.SetNameButton:SizeToContents()
+function Wire_PunchCardUI.SetNameButton:DoClick()
+	Derma_StringRequest(
+		"Write Punchcard Name",
+		"",
+		Wire_PunchCardUI.UserText or "",
+		function(str)
+			local limited = str:sub(1,48)
+			net.Start("wire_punchcard_write")
+				net.WriteEntity(Wire_PunchCardUI.CardEntity)
+				net.WriteUInt(0,16)
+				net.WriteUInt(0,16)
+				net.WriteUInt(0,2)
+				net.WriteString(limited)
+			net.SendToServer()
+			Wire_PunchCardUI:UpdateUserText(limited)
+		end
+	)
+end
+if not Wire_PunchCardUI.UserFont then
+	Wire_PunchCardUI.UserFont = "PunchCard_Handwritten"
+	surface.CreateFont(
+		"PunchCard_Handwritten",
+		{
+			font = "Akbar",
+			size=60
+		}
+	)
+end
+
+function Wire_PunchCardUI:UpdateUserText(str)
+	self.UserText = str
+	if self.Card.UpdateUserText then
+		self.Card:UpdateUserText(str)
+	end
+end
 
 -- Interprets punch card data and then opens the UI
-function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches)
+function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
 	if self.Card then
 		self.Card:Remove()
 	end
@@ -53,22 +91,24 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 		function self.Card.Patch()
 		end
 	end
-	print(Model)
 	local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
 	renderer(Columns,Rows,Data,Patches,self.Card,Writable)
 	self.Card:SetSize(0,0)
 	self.Card:SizeToChildren(true,true)
 	self.Card:SetPos(2,30)
 	self.Card:SetMouseInputEnabled(true)
+	self.CardEntity = Entity
 	self:SetSize(0,0)
 	self:SizeToChildren(true,true)
 	self:Center()
 	self:SetTitle(Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)"))
+	self:UpdateUserText(UserText)
+	local ctrlx,ctrly = self.btnMinim:GetPos()
+	local snx,sny = self.SetNameButton:GetSize()
+	self.SetNameButton:SetPos(ctrlx-snx,ctrly)
 	self:Show()
 	self:MakePopup()
 end
-
-Wire_PunchCardUI.Renderers = Wire_PunchCardUI.Renderers or {}
 
 net.Receive("wire_punchcard_data",function (len,ply)
 	local Entity = net.ReadEntity()
@@ -76,7 +116,7 @@ net.Receive("wire_punchcard_data",function (len,ply)
 	local Rows = net.ReadUInt(16)
 	local Writable = net.ReadBool()
 	local Model = net.ReadString()
-	local Name = net.ReadString()
+	local UserText = net.ReadString()
 	local Data = {}
 	local Patches = {}
 	for i=1,Rows,1 do
@@ -85,5 +125,5 @@ net.Receive("wire_punchcard_data",function (len,ply)
 	for i=1,Rows,1 do
 		table.insert(Patches,net.ReadUInt(Columns))
 	end
-	Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches)
+	Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
 end)

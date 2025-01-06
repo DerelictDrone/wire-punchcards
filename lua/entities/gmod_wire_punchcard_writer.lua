@@ -115,10 +115,10 @@ function ENT:Think()
 		self:NextThink(CurTime()+0.075)
 		return true
 	end
-	self.MediaMoving = true
 	if self.MediaDesiredRow < self.MediaCurrentRow then
 		self:CycleMedia(-1)
 		if not self.MediaMoving then
+			self.MediaMoving = true
 			self:TriggerOutputs("Currently Shifting",-1)
 		end	
 	end
@@ -133,6 +133,7 @@ function ENT:Think()
 		self:MediaDisconnect()
 		return true
 	end
+	self.MediaMoving = true
 	self:UpdateMediaPosition(self.MediaOffset)
 	self:NextThink(CurTime())
 	return true
@@ -263,7 +264,7 @@ function ENT:WriteCell(Address, value)
 		if self.HasCard then
 			-- write directly to punch card at current row
 			-- if the user instructs it to punch too early, skill issue.
-			self.InsertedCard:PunchRow(value,self.MediaCurrentRow)
+			self.InsertedCard:PunchRow(self.MediaWriteValue,self.MediaCurrentRow)
 			return true
 		else
 			return false
@@ -286,6 +287,7 @@ function ENT:TriggerInput(iname, value)
 		return
 	end
 	if iname == "Data" then
+		print(value)
 		self:WriteCell(2,value)
 	end
 end

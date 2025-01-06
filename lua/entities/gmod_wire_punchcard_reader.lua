@@ -115,7 +115,6 @@ function ENT:Think()
 		self:NextThink(CurTime()+0.075)
 		return true
 	end
-	self.MediaMoving = true
 	if self.MediaDesiredRow < self.MediaCurrentRow then
 		self:CycleMedia(-1)
 		if not self.MediaMoving then
@@ -133,6 +132,7 @@ function ENT:Think()
 		self:MediaDisconnect()
 		return true
 	end
+	self.MediaMoving = true
 	self:UpdateMediaPosition(self.MediaOffset)
 	self:NextThink(CurTime())
 	return true
