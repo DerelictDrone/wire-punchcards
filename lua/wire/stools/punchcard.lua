@@ -60,7 +60,7 @@ if SERVER then
 	end
 end
 
-function TOOL:RightClick( trace )
+function TOOL:RightClick(trace)
 	if trace.Entity:IsPlayer() then return false end
 	if trace.Entity:GetClass() ~= "gmod_wire_punchcard" then
 		return false
@@ -72,4 +72,34 @@ end
 
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard")
+	local list = panel:ComboBox("Punchcard Model","wire_punchcard_pc_model")
+	local label = vgui.Create("DLabel")
+	label:SetColor(Color(0,0,0,255))
+	panel:AddItem(label)
+	list:SetValue("Punchcard models")
+	local function loadCards()
+		list:Clear()
+		local curmodel = GetConVar("wire_punchcard_pc_model"):GetString()
+		for k,v in pairs(Wire_PunchCardModels) do
+			list:AddChoice(v.FriendlyName or k,k,curmodel == k)
+			if curmodel == k then
+				label:SetText(Wire_PunchCardModels[k].Description or "No description for model.")
+				label:InvalidateLayout(true)
+				label:SizeToContents()
+				label:InvalidateLayout(true)
+			end
+		end
+	end
+	hook.Add("Punchcard_UpdateModels","CreateSelector",loadCards)
+	loadCards()
+	local oldSelect = list.OnSelect
+	function list:OnSelect(i,v,d)
+		label:SetText(Wire_PunchCardModels[d].Description or "No description for model.")
+		-- Double layout invalidation seems necessary to get it to properly update, dunno why
+		label:SizeToContents()
+		label:InvalidateLayout(true)
+		label:SizeToContents()
+		label:InvalidateLayout(true)
+		return oldSelect(self,i,v,d)
+	end
 end

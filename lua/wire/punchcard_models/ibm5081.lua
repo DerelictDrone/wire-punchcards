@@ -1,12 +1,14 @@
 Wire_PunchCardModels["ibm5081"] = {
 	Columns = 10,
 	Rows = 80,
+	FriendlyName = "IBM 5081",
 	Description = "A generic 80 row wide 10 column card introduced between 1960 and 1970.\nUses rectangular holes, has no field divisions."
 }
 Wire_PunchCardModels["ibm5081op"] = {
 	Columns = 12,
 	Rows = 80,
-	Description = Wire_PunchCardModels.ibm5081.Description .. "\nThis version allows the empty space above the regular columns to be punched acting as the 11th and 12th columns.\nOtherwise known as Zone Punching or the X,Y rows."
+	FriendlyName = "IBM 5081 (Overpunch)",
+	Description = Wire_PunchCardModels.ibm5081.Description .. "\nThis version allows the empty space above the regular columns to be punched.\nActing as the 11th and 12th columns.\nOtherwise known as Zone Punching or the X,Y rows."
 }
 
 if CLIENT then
@@ -18,7 +20,7 @@ if CLIENT then
 	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable)
 		local usertextLabel = vgui.Create("DLabel",Panel)
 		usertextLabel:SetText(Panel.UserText or "")
-		usertextLabel:SetFont("Punchcard_Handwritten")
+		usertextLabel:SetFont("PunchCard_Handwritten")
 		usertextLabel:SizeToContents()
 		usertextLabel:SetColor(black)
 		local xsize,ysize = 15,30
@@ -86,13 +88,10 @@ if CLIENT then
 					local punchable = createPunchable(digit+digitoffset,row,overpunch)
 					punchable:SetPos(x,y)
 					y = y + ysize + ypad
-					-- print(digit+digitoffset+1)
 					if bit.band(p,masks[digit+digitoffset+1]) > 0 then
-						print(digit+digitoffset+1)
 						punchable:SetPatched() -- Bit is patched (can be patched AND punched)
 					end
 					if bit.band(r,masks[digit+digitoffset+1]) > 0 then
-						print(digit+digitoffset+1)
 						punchable:SetPunched() -- Bit is punched
 					end
 				end

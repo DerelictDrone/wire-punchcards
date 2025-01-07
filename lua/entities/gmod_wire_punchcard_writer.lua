@@ -94,19 +94,10 @@ function ENT:Think()
 		return
 	end
 	if not IsValid(self.DeviceConstraint) then
-		-- if self.ReconnectWeld then
-		-- 	if self:WeldMedia() then
-		-- 		self.ReconnectWeld = false
-		-- 		return
-		-- 	end
-		-- end
-		-- print("Invalid constraint")
-		-- print(self.DeviceConstraint)
 		self:MediaDisconnect()
 		return
 	end
 	-- Cycling logic
-	-- print("cur",self.MediaCurrentRow, "des", self.MediaDesiredRow)
 	if self.MediaDesiredRow == self.MediaCurrentRow then
 		if self.MediaMoving then
 			self:TriggerOutputs("Currently Shifting",0)
@@ -129,7 +120,6 @@ function ENT:Think()
 		end
 	end
 	if self.MediaCurrentRow > self.InsertedCard.Rows or self.MediaCurrentRow < 1 then
-		-- print("Done")
 		self:MediaDisconnect()
 		return true
 	end
@@ -162,7 +152,6 @@ end
 
 -- Disconnect the media, calls event handler on media if present.
 function ENT:MediaDisconnect(media)
-	-- print("Disconnected")
 	self.HasCard = false
 	if IsValid(self.DeviceConstraint) then
 		self.DeviceConstraint:Remove()
@@ -186,7 +175,6 @@ end
 function ENT:WeldMedia(recurse)
 	if not IsValid(self.DeviceConstraint) or recurse then
 		self.DeviceConstraint = constraint.Weld(self.InsertedCard,self,0,0,self.WeldForce or 5000,true)
-		-- print(self.DeviceConstraint)
 		self.DeviceConstraint.ConstraintIndex1 = #self.Constraints
 		self.DeviceConstraint.ConstraintIndex2 = #self.InsertedCard.Constraints
 	else
@@ -212,8 +200,6 @@ function ENT:UpdateMediaPosition(offset)
 	self.InsertedCard:SetPos(self.MediaPositionTemp)
 	self.InsertedCard:SetAngles(self:GetMediaAngle())
 	self:WeldMedia()
-	-- print(self.DeviceConstraint:GetInternalVariable(""))
-	-- self.ReconnectWeld = true -- We can't destroy a weld same tick so we have to ask it politely to reweld next tick
 	self:NextThink(CurTime())
 	return self.MediaPositionTemp
 end
@@ -287,7 +273,6 @@ function ENT:TriggerInput(iname, value)
 		return
 	end
 	if iname == "Data" then
-		print(value)
 		self:WriteCell(2,value)
 	end
 end

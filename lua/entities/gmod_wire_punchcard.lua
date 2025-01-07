@@ -141,7 +141,6 @@ function ENT:BuildDupeInfo()
 end
 
 function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
-	-- print(self,ent)
 	BaseClass.ApplyDupeInfo(self, ply, ent, info, GetEntByID)
 	ent.pc_model = info.pc_model or "ibm5081"
 	ent.pc_usertext = info.pc_usertext
