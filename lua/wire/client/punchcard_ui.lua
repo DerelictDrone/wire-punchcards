@@ -121,8 +121,7 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 		end
 	end
 
-	function self.Card:DrawCard(w, h, color, size, ...)
-		local hasCorner1, roundedCorner1, hasCorner2, roundedCorner2, hasCorner3, roundedCorner3, hasCorner4, roundedCorner4 = ...
+	function self.Card:DrawCard(w, h, color, size, hasCorner1, roundedCorner1, hasCorner2, roundedCorner2, hasCorner3, roundedCorner3, hasCorner4, roundedCorner4)
 		local points = {}
 	
 		if hasCorner1 then
