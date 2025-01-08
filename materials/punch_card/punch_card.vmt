@@ -1,5 +1,5 @@
-"VertexlitGeneric"
+"VertexLitGeneric"
 {
-	"$basetexture" "punch_card/punch_card"
- 	"$alphatest" "1"
+    "$basetexture" "punch_card/punch_card"
+    "$envmapmask" "punch_card/punch_card_envmask"
 }

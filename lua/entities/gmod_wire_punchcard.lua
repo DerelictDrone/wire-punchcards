@@ -6,13 +6,11 @@ ENT.WireDebugName 	= "Punchcard"
 if CLIENT then return end -- No more client
 
 function ENT:Initialize()
+	BaseClass.Initialize(self)
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetMoveType(MOVETYPE_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
 	self:SetUseType(SIMPLE_USE)
-	self:SetOverlayText("IBM 5081 Punch Card")
-	self:SetModelScale(0.5)
-	self:SetMaterial("punch_card")
 end
 
 Wire_PunchCardModels = Wire_PunchCardModels or {}
@@ -38,6 +36,7 @@ net.Receive("wire_punchcard_write",function(len,ply)
 		if Action == 0 then
 			ent.pc_usertext = net.ReadString() or ""
 			ent.pc_usertext = ent.pc_usertext:sub(1,48)
+			ent:UpdateOverlayText()
 		end
 	else
 		return
@@ -60,6 +59,7 @@ function ENT:Setup(pc_model)
 		self.Data[i] = 0
 		self.Patches[i] = 0
 	end
+	self:UpdateOverlayText()
 	self.MaxValue = math.ldexp(1,self.Columns)-1
 end
 
@@ -129,6 +129,11 @@ function ENT:Patch(row,column,silent)
 			-- no sfx yet
 		end
 	end
+end
+
+function ENT:UpdateOverlayText()
+	local model = Wire_PunchCardModels[self.pc_model]
+	self:SetOverlayText((model and model.FriendlyName or "Unknown Model")..(self.pc_usertext and "\n\n"..self.pc_usertext or ""))
 end
 
 function ENT:BuildDupeInfo()
