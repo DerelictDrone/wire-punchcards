@@ -93,19 +93,106 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 	end
 	local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
 	renderer(Columns,Rows,Data,Patches,self.Card,Writable)
-	self.Card:SetSize(0,0)
-	self.Card:SizeToChildren(true,true)
+
+	self.Card:SizeToChildren(false,true)
 	self.Card:SetPos(2,30)
 	self.Card:SetMouseInputEnabled(true)
 	self.CardEntity = Entity
 	self:SetSize(0,0)
 	self:SizeToChildren(true,true)
 	self:Center()
-	self:SetTitle(Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)"))
+	self:SetTitle("")
 	self:UpdateUserText(UserText)
+
+	local pnx,pny = self:GetSize()
+	local cdx,cdy = self.Card:GetSize()
+	self.Card:SetPos((pnx-cdx)/2,30)
+
 	local ctrlx,ctrly = self.btnMinim:GetPos()
 	local snx,sny = self.SetNameButton:GetSize()
-	self.SetNameButton:SetPos(ctrlx-snx,ctrly)
+	self.SetNameButton:SetPos(ctrlx-snx*1.1,(30-sny)/2)
+
+	local function roundCorner(points, cx, cy, startAngle, endAngle, radius, steps)
+		for i = 0, steps do
+			local angle = math.rad(startAngle + (endAngle - startAngle) * (i / steps))
+			local x = cx + math.cos(angle) * radius
+			local y = cy + math.sin(angle) * radius
+			table.insert(points, {x = x, y = y})
+		end
+	end
+
+	function self.Card:DrawCard(w, h, color, size, ...)
+		local hasCorner1, roundedCorner1, hasCorner2, roundedCorner2, hasCorner3, roundedCorner3, hasCorner4, roundedCorner4 = ...
+		local points = {}
+	
+		if hasCorner1 then
+			if roundedCorner1 then
+				roundCorner(points, size, size, 180, 270, size, 10)
+			else
+				table.insert(points, {x = size, y = 0})
+				table.insert(points, {x = 0, y = size})
+			end
+		else
+			table.insert(points, {x = 0, y = 0})
+		end
+	
+		if hasCorner2 then
+			if roundedCorner2 then
+				roundCorner(points, w - size, size, 270, 360, size, 10)
+			else
+				table.insert(points, {x = w - size, y = 0})
+				table.insert(points, {x = w, y = size})
+			end
+		else
+			table.insert(points, {x = w, y = 0})
+		end
+	
+		if hasCorner3 then
+			if roundedCorner3 then
+				roundCorner(points, w - size, h - size, 0, 90, size, 10)
+			else
+				table.insert(points, {x = w, y = h - size})
+				table.insert(points, {x = w - size, y = h})
+			end
+		else
+			table.insert(points, {x = w, y = h})
+		end
+	
+		if hasCorner4 then
+			if roundedCorner4 then
+				roundCorner(points, size, h - size, 90, 180, size, 10)
+			else
+				table.insert(points, {x = size, y = h})
+				table.insert(points, {x = 0, y = h - size})
+			end
+		else
+			table.insert(points, {x = 0, y = h})
+		end
+	
+		table.insert(points, {x = 0, y = size})
+	
+		surface.SetDrawColor(color)
+		draw.NoTexture()
+		surface.DrawPoly(points)
+	end
+
+	local title = Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)")
+
+	function self:Paint(w, h)
+		surface.SetDrawColor(20, 20, 20)
+		surface.DrawRect(0, 0, w, h)
+
+		draw.SimpleText(
+			title,
+			"DermaDefault",
+			w / 2,
+			15,
+			color_white,
+			TEXT_ALIGN_CENTER,
+			TEXT_ALIGN_CENTER
+		)
+	end
+
 	self:Show()
 	self:MakePopup()
 end

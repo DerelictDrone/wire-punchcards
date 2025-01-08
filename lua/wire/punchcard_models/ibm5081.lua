@@ -16,8 +16,21 @@ if CLIENT then
 	local gray = Color(128,128,128,255)
 	local black = Color(0,0,0,255)
 	local hidden = Color(0,0,0,0)
+	local card = Color(233,215,193,255)
 
 	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable)
+
+		local cornerSize = 50
+		function Panel:Paint(w, h)
+			self:DrawCard(w, h, card, cornerSize, -- Width, Height, Color, Corner Size
+			-- Enable corner?, Cut corner or round?
+				true, false,  -- Top left
+				false, false,  -- Top right
+				false, false, -- Bottom right
+				false, false  -- Bottom left
+			)
+		end
+
 		local usertextLabel = vgui.Create("DLabel",Panel)
 		usertextLabel:SetText(Panel.UserText or "")
 		usertextLabel:SetFont("PunchCard_Handwritten")
@@ -74,11 +87,14 @@ if CLIENT then
 		for i=1,Columns,1 do
 			masks[i] = math.ldexp(1,i-1)
 		end
-		local startx,starty = 0,((ysize+ypad)*2)+5
+		local startx,starty = cornerSize,((ysize+ypad)*2)+5
+		Panel:SetWidth( Rows*(xsize+xpad) + cornerSize*2 )
+
 		local x,y = startx,starty
 		if Overpunch then
 			Columns = Columns-2
 		end
+		
 		local function createRows(startx,starty,xpad,ypad,columns,digitoffset,overpunch)
 			digitoffset = digitoffset or 0
 			overpunch = overpunch or false
@@ -130,8 +146,8 @@ if CLIENT then
 		nameLabel:SetText("IBM [5081]")
 		nameLabel:SetColor(black)
 		if Overpunch then
-			x,y = 0,5
-			startx,starty = x,y
+			x, y = startx, 5
+			starty = y
 			createRows(startx,starty,xpad,ypad,2,Columns,true)
 		end
 	end
