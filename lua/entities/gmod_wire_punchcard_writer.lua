@@ -67,7 +67,8 @@ function ENT:Initialize()
 	setupCollision(self)
 end
 
-function ENT:Setup(Option)
+function ENT:Setup(silent)
+	self.SilentPunching = silent
 end
 
 function ENT:Think()
@@ -250,7 +251,7 @@ function ENT:WriteCell(Address, value)
 		if self.HasCard then
 			-- write directly to punch card at current row
 			-- if the user instructs it to punch too early, skill issue.
-			self.InsertedCard:PunchRow(self.MediaWriteValue,self.MediaCurrentRow)
+			self.InsertedCard:PunchRow(self.MediaWriteValue,self.MediaCurrentRow,self.SilentPunching)
 			return true
 		else
 			return false
