@@ -104,18 +104,20 @@ function ENT:PunchRow(value,row,silent)
 	value = math.floor(value)
 	if value <= 0 then return end
 	if self.Data[row] then
+		local oldData = self.Data[row]
 		self.Data[row] = bit.bor(self.Data[row],math.Clamp(value,0,self.MaxValue))
-	end
-	if not silent then
-		self:EmitSound(string.format("paper-punch-0%d.wav",math.floor(math.random()*7)+1))
+		if not silent and oldData ~= self.Data[row] then
+			self:EmitSound(string.format("paper-punch-0%d.wav",math.floor(math.random()*7)+1))
+		end
 	end
 end
 
 function ENT:Punch(column,row,silent)
-	if column == 0 then return end
+	if column <= 0 then return end
 	if self.Data[row] then
+		local oldData = self.Data[row]
 		self.Data[row] = bit.bor(self.Data[row],math.ldexp(1,column-1))
-		if not silent then
+		if not silent and oldData ~= self.Data[row] then
 			self:EmitSound(string.format("paper-punch-0%d.wav",math.floor(math.random()*7)+1))
 		end
 	end
@@ -123,9 +125,11 @@ end
 
 function ENT:Patch(row,column,silent)
 	if self.Data[row] then
+		local oldPatch = self.Patches[row]
+		local oldData = self.Data[row]
 		self.Patches[row] = bit.bor(self.Patches[row],math.ldexp(1,column-1))
 		self.Data[row] = bit.band(self.Data[row],bit.bnot(math.ldexp(1,column-1)))
-		if not silent then
+		if not silent and (oldPatch ~= self.Patches[row] or oldData ~= self.Data[row]) then
 			-- no sfx yet
 		end
 	end

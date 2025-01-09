@@ -8,7 +8,7 @@ Wire_PunchCardModels["ibm5081op"] = {
 	Columns = 12,
 	Rows = 80,
 	FriendlyName = "IBM 5081 (Overpunch)",
-	Description = Wire_PunchCardModels.ibm5081.Description .. "\nThis version allows the empty space above the regular columns to be punched.\nActing as the 11th and 12th columns.\nOtherwise known as Zone Punching or the X,Y rows."
+	Description = Wire_PunchCardModels.ibm5081.Description .. "\n\nThis version allows the empty space above the regular columns to be punched.\nActing as the 11th and 12th columns.\nOtherwise known as Zone Punching or the X,Y rows."
 }
 
 if CLIENT then

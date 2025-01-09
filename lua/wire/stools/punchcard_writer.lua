@@ -12,9 +12,11 @@ WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
 
 TOOL.ClientConVar[ "model" ] = "models/props_c17/consolebox05a.mdl"
+TOOL.ClientConVar[ "silent" ] = "0"
 -- if SERVER then
--- 	function TOOL:GetConVars()
--- 	end
+	function TOOL:GetConVars()
+		return self:GetClientBool("silent")
+	end
 
 -- 	-- Uses default WireToolObj:MakeEnt's WireLib.MakeWireEnt function
 -- end
@@ -49,4 +51,5 @@ end
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_writer")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_writer", nil, 4)
+	panel:CheckBox("Silent Punching","wire_punchcard_writer_silent")
 end
