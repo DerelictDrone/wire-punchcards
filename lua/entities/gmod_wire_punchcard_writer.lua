@@ -144,10 +144,12 @@ function ENT:MediaConnect(media)
 		media:MediaConnected(self)
 	end
 	local rows = media.Rows
-	local minS,_ = media:GetCollisionBounds()
+	local _,maxS = media:GetCollisionBounds()
 	self.MediaOffset:SetUnpacked(0,0,0)
-	minS:Div(rows/15) -- Hardcoded constant, make this move until the "top" of the card is at the bottom of the device's hitbox
-	self.MediaTravelDistance:SetUnpacked(0,0,minS.z)
+	maxS:Rotate(self.MediaAngle)
+	local sminS = self:GetCollisionBounds()
+	sminS:Add(-maxS)
+	self.MediaTravelDistance:SetUnpacked(0,0,sminS.y/(media.Rows/1.25))
 	self:TriggerOutputs("Punchcard Inserted",1)
 end
 
