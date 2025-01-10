@@ -13,9 +13,10 @@ WireToolSetup.SetupMax( 20 )
 
 TOOL.ClientConVar[ "model" ] = "models/props_c17/consolebox05a.mdl"
 TOOL.ClientConVar[ "silent" ] = "0"
+TOOL.ClientConVar[ "mediareversible" ] = "0"
 -- if SERVER then
 	function TOOL:GetConVars()
-		return self:GetClientBool("silent")
+		return self:GetClientBool("silent"),self:GetClientBool("mediareversible")
 	end
 
 -- 	-- Uses default WireToolObj:MakeEnt's WireLib.MakeWireEnt function
@@ -51,5 +52,6 @@ end
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_writer")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_writer", nil, 4)
+	panel:CheckBox("Allow Bottom Insertion","wire_punchcard_writer_mediareversible")
 	panel:CheckBox("Silent Punching","wire_punchcard_writer_silent")
 end

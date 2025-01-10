@@ -13,12 +13,12 @@ local function setupCollision(self)
 	self.MinBox = Vector(-5,-5,-5)
 	self.MaxBox = Vector(5,5,5)
 	local minS,maxS = self:GetCollisionBounds()
-	self.ColliderOffset = Vector(0,0,maxS.z)  -- Centered X and Y coordinates, keeping Z for top of collision box
-	self.MediaPosition = Vector(0,0,maxS.z)
-	self.MinBox:Add(self.ColliderOffset)
+	self.TopColliderOffset = Vector(0,0,maxS.z)  -- Centered X and Y coordinates, keeping Z for top of collision box
+	self.BottomColliderOffset = Vector(0,0,-maxS.z)
+	self.MinBox:Add(self.TopColliderOffset)
 	VectorMax(self.MinBox,minS) -- Try to make sure that we won't grab from the bottom by clamping to the original min hitbox
 	local originalZ = self.MaxBox.z
-	self.MaxBox:Add(self.ColliderOffset)
+	self.MaxBox:Add(self.TopColliderOffset)
 	VectorMin(self.MaxBox,maxS) -- Clamp the X and Y to fit the model's dimensions if too big
 	self.MaxBox.z = originalZ
 end
@@ -32,15 +32,19 @@ end
 local drawOffset = Vector(0,0,0)
 -- local small = Vector(1,1,1)
 local green = Color(0,255,0,255)
+local red = Color(255,0,0,255)
 function ENT:Draw()
 	self:DrawModel()
 	if Punchcard_ShowHitboxes then
 		local p = self:GetPos()
 		local a = self:GetAngles()
-		drawOffset:Set(self.ColliderOffset)
-		local minS,maxS = self:GetCollisionBounds()
+		drawOffset:Set(self.TopColliderOffset)
 		drawOffset:Rotate(a)
+		local minS,maxS = self:GetCollisionBounds()
 		render.DrawWireframeBox(p+drawOffset,a,self.MinBox,self.MaxBox,green)
+		drawOffset:Set(self.BottomColliderOffset)
+		drawOffset:Rotate(a)
+		render.DrawWireframeBox(p+drawOffset,a,self.MaxBox,self.MinBox,red)
 		render.DrawWireframeBox(p,a,minS,maxS)
 		-- local endpos = self:GetEndPos()
 		-- render.DrawWireframeBox(p+endpos,a,-small,small)
@@ -61,7 +65,7 @@ function ENT:Initialize()
 	self.MinBoxTemp = Vector(0,0,0)
 	self.MaxBoxTemp = Vector(0,0,0)
 	self.MediaMoving = false
-	-- self.MediaPosition = Vector(0,0,5)
+	self.MediaPosition = Vector(0,0,0)
 	self.MediaPositionTemp = Vector(0,0,0)
 	self.MediaOffset = Vector(0,0,0)
 	self.MediaTravelDistance = Vector(0,0,0)
@@ -74,30 +78,40 @@ function ENT:Initialize()
 	self:CallOnRemove("MediaSaver",self.MediaDisconnect)
 end
 
-function ENT:Setup(Option)
+function ENT:Setup(reversible)
+	self.MediaReversible = reversible
+end
+
+local function FindCard(self,ColliderOffset,MinBox,MaxBox)
+	local p = self:GetPos()
+	local a = self:GetAngles()
+	self.MinBoxTemp:Set(MinBox)
+	self.MaxBoxTemp:Set(MaxBox)
+	self.MinBoxTemp:Rotate(a)
+	self.MaxBoxTemp:Rotate(a)
+	self.MinBoxTemp:Add(p+ColliderOffset)
+	self.MaxBoxTemp:Add(p+ColliderOffset)
+	local ents = ents.FindInBox(self.MinBoxTemp,self.MaxBoxTemp)
+	local found = false
+	for _,ent in ipairs(ents) do
+		if ent:GetClass() == "gmod_wire_punchcard" then
+			found = ent
+			break
+		end
+	end
+	return found
 end
 
 function ENT:Think()
 	BaseClass.Think(self)
 	if not self.HasCard then
-		local p = self:GetPos()
-		local a = self:GetAngles()
-		self.MinBoxTemp:Set(self.MinBox)
-		self.MaxBoxTemp:Set(self.MaxBox)
-		self.MinBoxTemp:Rotate(a)
-		self.MaxBoxTemp:Rotate(a)
-		self.MinBoxTemp:Add(p+self.ColliderOffset)
-		self.MaxBoxTemp:Add(p+self.ColliderOffset)
-		local ents = ents.FindInBox(self.MinBoxTemp,self.MaxBoxTemp)
-		local found = false
-		for _,ent in ipairs(ents) do
-			if ent:GetClass() == "gmod_wire_punchcard" then
-				found = ent
-				break
-			end
-		end
-		if not found then return end
-		self:MediaConnect(found)
+		local card = FindCard(self,self.TopColliderOffset,self.MinBox,self.MaxBox)
+		local top = true
+		if not card and not self.MediaReversible then return end
+		top = card and top or false
+		card = card or FindCard(self,self.BottomColliderOffset,self.MaxBox,self.MinBox)
+		if not card then return end
+		self:MediaConnect(card,top)
 		return
 	end
 	if not IsValid(self.DeviceConstraint) then
@@ -135,26 +149,43 @@ function ENT:Think()
 	return true
 end
 
--- Helper function for self, lets media know when its been connected
-function ENT:MediaConnect(media)
+-- Helper function for self, connects a media to this, and informs media it's connected.
+function ENT:MediaConnect(media,top)
 	if not IsValid(media) then return end
 	if media.InDevice then return end
+	if media.MediaConnected then
+		if not media:MediaConnected(self) then
+			return -- media has politely declined being inserted to this device
+		end
+	end
 	self.HasCard = true
 	self.InsertedCard = media
-	self.MediaCurrentRow = 1
-	self.MediaDesiredRow = 1
-	local phys = media:GetPhysicsObject()
-	self:UpdateMediaPosition()
-	if media.MediaConnected then
-		media:MediaConnected(self)
-	end
 	local rows = media.Rows
-	local minS,_ = media:GetCollisionBounds()
+	if top then
+		self.MediaCurrentRow = 1
+		self.MediaDesiredRow = 1
+	else
+		self.MediaCurrentRow = rows
+		self.MediaDesiredRow = rows
+	end
+	local phys = media:GetPhysicsObject()
+	local _,maxS = media:GetCollisionBounds()
 	self.MediaOffset:SetUnpacked(0,0,0)
-	minS:Div(rows/15) -- Hardcoded constant, make this move until the "top" of the card is at the bottom of the device's hitbox
-	self.MediaTravelDistance:SetUnpacked(0,0,minS.z)
-	self:TriggerOutputs("Punchcard Inserted",1)
-	self:TriggerOutputs("Data",media:ReadRow(1))
+	local sminS = self:GetCollisionBounds()
+	local tempRotatedCopy = Vector(maxS)
+	maxS:Rotate(self.MediaAngle)
+	self.MediaPosition:SetUnpacked(0,0,self.TopColliderOffset.z+(tempRotatedCopy.z))
+	maxS:Add(self.MediaPosition)
+	maxS:Rotate(self.MediaAngle)
+	sminS:Add(-maxS)
+	self.MediaTravelDistance:SetUnpacked(0,0,sminS.z/(media.Rows))
+	if not top then
+		self.MediaOffset:Set(self.MediaTravelDistance*(rows))
+	end
+	self:UpdateMediaPosition(self.MediaOffset)
+	-- If inserted at bottom, will give you a -1 to let you know that the punchcard is reversed(so it starts at the end)
+	self:TriggerOutputs("Punchcard Inserted",top and 1 or -1)
+	self:TriggerOutputs("Data",media:ReadRow(self.MediaOffset))
 end
 
 -- Disconnect the media, calls event handler on media if present.
@@ -195,33 +226,6 @@ function ENT:WeldMedia(recurse)
 		return self:WeldMedia(true)
 	end
 	self.InsertedCard:PhysWake()
-end
-
--- Updates position of the object w/ offset(rotated for you), rewelds, and returns the pos
-function ENT:MediaConnect(media)
-	if not IsValid(media) then return end
-	if media.InDevice then return end
-	self.HasCard = true
-	self.InsertedCard = media
-	self.MediaCurrentRow = 1
-	self.MediaDesiredRow = 1
-	local phys = media:GetPhysicsObject()
-	self:UpdateMediaPosition()
-	if media.MediaConnected then
-		media:MediaConnected(self)
-	end
-	local rows = media.Rows
-	local _,maxS = media:GetCollisionBounds()
-	self.MediaOffset:SetUnpacked(0,0,0)
-	local sminS = self:GetCollisionBounds()
-	local tempRotatedCopy = Vector(maxS)
-	maxS:Rotate(self.MediaAngle)
-	self.MediaPosition:SetUnpacked(0,0,self.ColliderOffset.z+(tempRotatedCopy.z))
-	maxS:Add(self.MediaPosition)
-	maxS:Rotate(self.MediaAngle)
-	sminS:Add(-maxS)
-	self.MediaTravelDistance:SetUnpacked(0,0,sminS.z/(media.Rows))
-	self:TriggerOutputs("Punchcard Inserted",1)
 end
 
 -- Updates position of the object w/ offset(rotated for you), rewelds, and returns the pos

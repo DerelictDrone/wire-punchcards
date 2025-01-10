@@ -84,6 +84,7 @@ function ENT:MediaConnected(device)
 	end
 	self.InDevice = true
 	self.Device = device
+	return true
 end
 
 function ENT:MediaDisconnected(device)

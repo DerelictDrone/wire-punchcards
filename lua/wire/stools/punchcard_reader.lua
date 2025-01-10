@@ -12,11 +12,13 @@ WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
 
 TOOL.ClientConVar[ "model" ] = "models/props_lab/reciever01d.mdl"
--- if SERVER then
-	-- function TOOL:GetConVars()
-	-- 	-- return self:GetClientString( "type" )
-	-- end
--- end
+TOOL.ClientConVar[ "mediareversible" ] = "0"
+
+if SERVER then
+	function TOOL:GetConVars()
+		return self:GetClientBool("mediareversible")
+	end
+end
 
 if CLIENT then
 	function TOOL:Holster()
@@ -48,4 +50,5 @@ end
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_reader")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_reader", nil, 4)
+	panel:CheckBox("Allow Bottom Insertion","wire_punchcard_reader_mediareversible")
 end
