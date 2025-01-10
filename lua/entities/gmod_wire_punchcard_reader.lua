@@ -14,6 +14,7 @@ local function setupCollision(self)
 	self.MaxBox = Vector(5,5,5)
 	local minS,maxS = self:GetCollisionBounds()
 	self.ColliderOffset = Vector(0,0,maxS.z)  -- Centered X and Y coordinates, keeping Z for top of collision box
+	self.MediaPosition = Vector(0,0,maxS.z)
 	self.MinBox:Add(self.ColliderOffset)
 	VectorMax(self.MinBox,minS) -- Try to make sure that we won't grab from the bottom by clamping to the original min hitbox
 	local originalZ = self.MaxBox.z
@@ -29,6 +30,8 @@ function ENT:Initialize()
 end
 
 local drawOffset = Vector(0,0,0)
+-- local small = Vector(1,1,1)
+local green = Color(0,255,0,255)
 function ENT:Draw()
 	self:DrawModel()
 	if Punchcard_ShowHitboxes then
@@ -37,7 +40,11 @@ function ENT:Draw()
 		drawOffset:Set(self.ColliderOffset)
 		local minS,maxS = self:GetCollisionBounds()
 		drawOffset:Rotate(a)
-		render.DrawWireframeBox(p+drawOffset,a,self.MinBox,self.MaxBox)
+		render.DrawWireframeBox(p+drawOffset,a,self.MinBox,self.MaxBox,green)
+		render.DrawWireframeBox(p,a,minS,maxS)
+		-- local endpos = self:GetEndPos()
+		-- render.DrawWireframeBox(p+endpos,a,-small,small)
+		-- render.DrawWireframeBox(p+self.MediaPosition,a,-small,small)
 	end
 end
 
@@ -51,11 +58,10 @@ function ENT:Initialize()
 	self.Inputs = Wire_CreateInputs(self, { "Shift Row" })
 	self.Outputs = Wire_CreateOutputs(self, {"Punchcard Inserted", "Currently Shifting", "Data"})
 	self.HasCard = false
-	self.ReconnectWeld = false
 	self.MinBoxTemp = Vector(0,0,0)
 	self.MaxBoxTemp = Vector(0,0,0)
 	self.MediaMoving = false
-	self.MediaPosition = Vector(0,0,5)
+	-- self.MediaPosition = Vector(0,0,5)
 	self.MediaPositionTemp = Vector(0,0,0)
 	self.MediaOffset = Vector(0,0,0)
 	self.MediaTravelDistance = Vector(0,0,0)
@@ -65,6 +71,7 @@ function ENT:Initialize()
 	self.MediaDesiredRow = 1
 	self.MediaCurrentRow = 1
 	setupCollision(self)
+	self:CallOnRemove("MediaSaver",self.MediaDisconnect)
 end
 
 function ENT:Setup(Option)
@@ -191,12 +198,38 @@ function ENT:WeldMedia(recurse)
 end
 
 -- Updates position of the object w/ offset(rotated for you), rewelds, and returns the pos
+function ENT:MediaConnect(media)
+	if not IsValid(media) then return end
+	if media.InDevice then return end
+	self.HasCard = true
+	self.InsertedCard = media
+	self.MediaCurrentRow = 1
+	self.MediaDesiredRow = 1
+	local phys = media:GetPhysicsObject()
+	self:UpdateMediaPosition()
+	if media.MediaConnected then
+		media:MediaConnected(self)
+	end
+	local rows = media.Rows
+	local _,maxS = media:GetCollisionBounds()
+	self.MediaOffset:SetUnpacked(0,0,0)
+	local sminS = self:GetCollisionBounds()
+	local tempRotatedCopy = Vector(maxS)
+	maxS:Rotate(self.MediaAngle)
+	self.MediaPosition:SetUnpacked(0,0,self.ColliderOffset.z+(tempRotatedCopy.z))
+	maxS:Add(self.MediaPosition)
+	maxS:Rotate(self.MediaAngle)
+	sminS:Add(-maxS)
+	self.MediaTravelDistance:SetUnpacked(0,0,sminS.z/(media.Rows))
+	self:TriggerOutputs("Punchcard Inserted",1)
+end
+
+-- Updates position of the object w/ offset(rotated for you), rewelds, and returns the pos
 function ENT:UpdateMediaPosition(offset)
 	self.MediaPositionTemp:Set(self.MediaPosition)
+	self.MediaPositionTemp:Add(offset or Vector(0,0,0))
 	self.MediaPositionTemp:Rotate(self:GetAngles())
 	self.MediaPositionTemp:Add(self:GetPos())
-	self.MediaPositionTemp:Add(offset or Vector(0,0,0))
-	local physobj = self.InsertedCard:GetPhysicsObject()
 	self.InsertedCard:SetPos(self.MediaPositionTemp)
 	self.InsertedCard:SetAngles(self:GetMediaAngle())
 	self:WeldMedia()

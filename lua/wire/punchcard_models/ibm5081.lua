@@ -12,17 +12,20 @@ Wire_PunchCardModels["ibm5081op"] = {
 }
 
 if CLIENT then
+	local screenspace = Material("models/screenspace")
 	local white = Color(255,255,255,255)
 	local gray = Color(128,128,128,255)
 	local black = Color(0,0,0,255)
 	local hidden = Color(0,0,0,0)
 	local card = Color(233,215,193,255)
+	local tempColor = Color(0,0,0,0)
 
-	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable)
-
+	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable,UserColor)
+		local CardColor = UserColor or card
+		tempColor:SetUnpacked(math.min(CardColor.r*1.1,255),math.min(CardColor.g*1.1,255),math.min(CardColor.b*1.1,255),CardColor.a)
 		local cornerSize = 50
 		function Panel:Paint(w, h)
-			self:DrawCard(w, h, card, cornerSize, -- Width, Height, Color, Corner Size
+			self:DrawCard(w, h, CardColor, cornerSize, -- Width, Height, Color, Corner Size
 			-- Enable corner?, Cut corner or round?
 				true, false,  -- Top left
 				false, false,  -- Top right
@@ -42,7 +45,7 @@ if CLIENT then
 			local holder = vgui.Create("DShape",Panel)
 			holder:SetType("Rect")
 			holder:SetSize(xsize,ysize)
-			holder:SetColor(overpunch and hidden or white)
+			holder:SetColor(overpunch and hidden or tempColor)
 			holder.m_bSelectable = true -- Allow selection by GetChildrenInRect
 			local t
 			if not overpunch then
@@ -50,18 +53,20 @@ if CLIENT then
 			end
 			function holder:SetPunched()
 				if t then
-					t:SetColor(black)
+					t:SetColor(hidden)
 				end
 				self:SetColor(black)
-				holder.Punched = true
+				self.CustomMaterial = screenspace
+				self.Punched = true
 			end
 			function holder:SetPatched()
 				if t then
 					t:SetColor(gray)
 				end
 				self:SetColor(gray)
-				holder.Patched = true
-				holder.Punched = false
+				self.Patched = true
+				self.Punched = false
+				self.CustomMaterial = nil
 			end
 			if Writable then
 				function holder:DoClick()
@@ -81,6 +86,7 @@ if CLIENT then
 				local tx,ty = t:GetPos()
 				t:SetPos(tx+1,ty)
 			end
+			holder.Paint = Panel.ColumnPaint
 			return holder
 		end
 		local masks = {}

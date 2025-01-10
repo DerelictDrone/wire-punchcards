@@ -4,11 +4,11 @@ local function loadModels()
 		"models/props_lab/reciever01b.mdl",
 		"models/props_lab/reciever01c.mdl",
 		"models/props_lab/reciever01d.mdl",
-		"models/props_c17/consolebox05a.mdl",
-		"models/props_c17/consolebox03a.mdl",
-		"models/props_c17/consolebox01a.mdl",
+		-- "models/props_c17/consolebox05a.mdl", -- Does strange things to offset / collision box size that I can't figure out
+		-- "models/props_c17/consolebox03a.mdl",
+		-- "models/props_c17/consolebox01a.mdl",
 		"models/hunter/plates/plate025x025.mdl",
-		"models/squad/sf_plates/sf_plate1x1.mdl",
+		-- "models/squad/sf_plates/sf_plate1x1.mdl", -- Uncentered position / collision bounds.
 	})
 end
 

@@ -91,8 +91,29 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 		function self.Card.Patch()
 		end
 	end
+	function self.Card:ColumnPaint(w,h)
+		if self.CustomMaterial then
+			surface.SetMaterial(self.CustomMaterial)
+			local u,v = self:LocalToScreen(0,0)
+			local sW,sH = ScrW(),ScrH()
+			u = u/sW
+			v = v/sH
+			surface.DrawTexturedRectUV(0,0,w,h,u,v,u+(w/sW),v+(h/sH))
+			draw.NoTexture()
+			return
+		else
+			surface.SetDrawColor(self:GetColor())
+			surface.DrawRect(0,0,w,h)
+			return
+		end
+	end
+
 	local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
-	renderer(Columns,Rows,Data,Patches,self.Card,Writable)
+	local Color = Entity:GetColor()
+	if Color.r == 255 and Color.g == 255 and Color.b == 255 and Color.a == 255 then
+		Color = nil
+	end
+	renderer(Columns,Rows,Data,Patches,self.Card,Writable,Color)
 
 	self.Card:SizeToChildren(false,true)
 	self.Card:SetPos(2,30)
@@ -178,7 +199,7 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 	local title = Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)")
 
 	function self:Paint(w, h)
-		surface.SetDrawColor(20, 20, 20)
+		surface.SetDrawColor(20, 20, 20, 64)
 		surface.DrawRect(0, 0, w, h)
 
 		draw.SimpleText(
