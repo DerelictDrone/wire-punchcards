@@ -12,7 +12,6 @@ Wire_PunchCardModels["ibm5081op"] = {
 }
 
 if CLIENT then
-	local screenspace = Material("models/screenspace")
 	local white = Color(255,255,255,255)
 	local gray = Color(128,128,128,255)
 	local black = Color(0,0,0,255)
@@ -56,7 +55,7 @@ if CLIENT then
 					t:SetColor(hidden)
 				end
 				self:SetColor(black)
-				self.CustomMaterial = screenspace
+				self.CustomMaterial = Panel.TransparentMaterial
 				self.Punched = true
 			end
 			function holder:SetPatched()

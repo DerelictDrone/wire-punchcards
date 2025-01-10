@@ -6,6 +6,7 @@ Wire_PunchCardUI.SetNameButton = Wire_PunchCardUI.SetNameButton or vgui.Create("
 Wire_PunchCardUI.Renderers = Wire_PunchCardUI.Renderers or {}
 Wire_PunchCardUI.SetNameButton:SetText("Edit Punchcard Name")
 Wire_PunchCardUI.SetNameButton:SizeToContents()
+local screenspace = Material("models/screenspace")
 function Wire_PunchCardUI.SetNameButton:DoClick()
 	Derma_StringRequest(
 		"Write Punchcard Name",
@@ -91,6 +92,8 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 		function self.Card.Patch()
 		end
 	end
+	-- Provide options for rendering transparently / with material.
+	self.Card.TransparentMaterial = screenspace
 	function self.Card:ColumnPaint(w,h)
 		if self.CustomMaterial then
 			surface.SetMaterial(self.CustomMaterial)
