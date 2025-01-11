@@ -119,7 +119,7 @@ function ENT:Punch(column,row,silent)
 		local oldData = self.Data[row]
 		self.Data[row] = bit.bor(self.Data[row],math.ldexp(1,column-1))
 		if not silent and oldData ~= self.Data[row] then
-			self:EmitSound(string.format("paper-punch-0%d.wav",math.floor(math.random()*7)+1))
+			self:EmitSound(string.format("paper-punch-%d.wav",math.floor(math.random()*7)+1))
 		end
 	end
 end
@@ -131,7 +131,7 @@ function ENT:Patch(row,column,silent)
 		self.Patches[row] = bit.bor(self.Patches[row],math.ldexp(1,column-1))
 		self.Data[row] = bit.band(self.Data[row],bit.bnot(math.ldexp(1,column-1)))
 		if not silent and (oldPatch ~= self.Patches[row] or oldData ~= self.Data[row]) then
-			-- no sfx yet
+			self:EmitSound(string.format("paper-patch-%d.wav",math.floor(math.random()*18)+1))
 		end
 	end
 end
@@ -156,6 +156,7 @@ function ENT:ApplyDupeInfo(ply, ent, info, GetEntByID)
 	ent.pc_usertext = info.pc_usertext
 	ent.Patches = info.PCardPatches or ent.Patches or {}
 	ent.Data = info.PCardData or ent.Data or {}
+	ent:UpdateOverlayText()
 end
 
 duplicator.RegisterEntityClass("gmod_wire_punchcard", WireLib.MakeWireEnt, "Data", "pc_model")
