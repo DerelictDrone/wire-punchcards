@@ -74,6 +74,7 @@ function ENT:Initialize()
 	self.MediaAngleTemp = Angle(0,0,0)
 	self.MediaDesiredRow = 1
 	self.MediaCurrentRow = 1
+	self.MediaReversed = false
 	setupCollision(self)
 	self:CallOnRemove("MediaSaver",self.MediaDisconnect)
 end
@@ -186,6 +187,7 @@ function ENT:MediaConnect(media,top)
 	end
 	self:UpdateMediaPosition(self.MediaOffset)
 	-- If inserted at bottom, will give you a -1 to let you know that the punchcard is reversed(so it starts at the end)
+	self.MediaReversed = top
 	self:TriggerOutputs("Punchcard Inserted",top and 1 or -1)
 end
 
@@ -266,7 +268,8 @@ function ENT:ReadCell(Address)
 		end
 	end
 	if Address == 1 then
-		return self.HasCard and 1 or 0
+		if not self.HasCard then return 0 end
+		return self.MediaReversed and -1 or 1
 	end
 	if Address == 2 then
 		-- No use in clamping this now, I'll let them use it as a scratch register if they need to.
