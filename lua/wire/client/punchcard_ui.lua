@@ -6,6 +6,8 @@ Wire_PunchCardUI.SetNameButton = Wire_PunchCardUI.SetNameButton or vgui.Create("
 Wire_PunchCardUI.Renderers = Wire_PunchCardUI.Renderers or {}
 Wire_PunchCardUI.SetNameButton:SetText("Edit Punchcard Name")
 Wire_PunchCardUI.SetNameButton:SizeToContents()
+Wire_PunchCardUI:SetTitle("")
+
 local screenspace = Material("models/screenspace")
 function Wire_PunchCardUI.SetNameButton:DoClick()
 	Derma_StringRequest(
@@ -36,6 +38,7 @@ if not Wire_PunchCardUI.UserFont then
 	)
 end
 
+
 function Wire_PunchCardUI:UpdateUserText(str)
 	self.UserText = str
 	if self.Card.UpdateUserText then
@@ -43,109 +46,48 @@ function Wire_PunchCardUI:UpdateUserText(str)
 	end
 end
 
--- Interprets punch card data and then opens the UI
-function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
-	if self.Card then
-		self.Card:Remove()
-	end
-	self.Card = vgui.Create("DPanel",Wire_PunchCardUI)
-	-- since they don't allow clicking on shapes lets just quickly write our own handler
-	local mx,my = 0,0
-	function self.Card:OnCursorMoved(x,y)
-		mx,my = x,y
-	end
-	function self.Card:OnMouseReleased(mkey)
-		local elem = self:GetChildrenInRect(mx-1,my-1,2,2)[1]
-		if not elem then return end
-		if mkey == MOUSE_LEFT then
-			if elem.DoClick then
-				elem:DoClick()
-			end
-		end
-		if mkey == MOUSE_RIGHT then
-			if elem.DoRightClick then
-				elem:DoRightClick()
-			end
-		end
-	end
-	if Writable then
-		function self.Card.Punch(row,col)
-			net.Start("wire_punchcard_write")
-				net.WriteEntity(Entity)
-				net.WriteUInt(col+1,16)
-				net.WriteUInt(row+1,16)
-				net.WriteUInt(1,2)
-			net.SendToServer()
-		end
-		function self.Card.Patch(col,row)
-			net.Start("wire_punchcard_write")
-				net.WriteEntity(Entity)
-				net.WriteUInt(col+1,16)
-				net.WriteUInt(row+1,16)
-				net.WriteUInt(2,2)
-			net.SendToServer()
-		end
+function Wire_PunchCardUI:Paint(w, h)
+	surface.SetDrawColor(20, 20, 20, 64)
+	surface.DrawRect(0, 0, w, h)
+
+	draw.SimpleText(
+		self.PCTitle,
+		"DermaDefault",
+		w / 2,
+		15,
+		color_white,
+		TEXT_ALIGN_CENTER,
+		TEXT_ALIGN_CENTER
+	)
+end
+
+local function ColumnPaint(self,w,h)
+	if self.CustomMaterial then
+		surface.SetMaterial(self.CustomMaterial)
+		local u,v = self:LocalToScreen(0,0)
+		local sW,sH = ScrW(),ScrH()
+		u = u/sW
+		v = v/sH
+		surface.DrawTexturedRectUV(0,0,w,h,u,v,u+(w/sW),v+(h/sH))
+		draw.NoTexture()
+		return
 	else
-		-- noop these
-		function self.Card.Punch()
-		end
-		function self.Card.Patch()
-		end
+		surface.SetDrawColor(self:GetColor())
+		surface.DrawRect(0,0,w,h)
+		return
 	end
-	-- Provide options for rendering transparently / with material.
-	self.Card.TransparentMaterial = screenspace
-	function self.Card:ColumnPaint(w,h)
-		if self.CustomMaterial then
-			surface.SetMaterial(self.CustomMaterial)
-			local u,v = self:LocalToScreen(0,0)
-			local sW,sH = ScrW(),ScrH()
-			u = u/sW
-			v = v/sH
-			surface.DrawTexturedRectUV(0,0,w,h,u,v,u+(w/sW),v+(h/sH))
-			draw.NoTexture()
-			return
-		else
-			surface.SetDrawColor(self:GetColor())
-			surface.DrawRect(0,0,w,h)
-			return
-		end
+end
+
+local function roundCorner(points, cx, cy, startAngle, endAngle, radius, steps)
+	for i = 0, steps do
+		local angle = math.rad(startAngle + (endAngle - startAngle) * (i / steps))
+		local x = cx + math.cos(angle) * radius
+		local y = cy + math.sin(angle) * radius
+		table.insert(points, {x = x, y = y})
 	end
+end
 
-	local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
-	local Color = Entity:GetColor()
-	if Color.r == 255 and Color.g == 255 and Color.b == 255 and Color.a == 255 then
-		Color = nil
-	end
-	renderer(Columns,Rows,Data,Patches,self.Card,Writable,Color)
-
-	self.Card:SizeToChildren(false,true)
-	self.Card:SetPos(2,30)
-	self.Card:SetMouseInputEnabled(true)
-	self.CardEntity = Entity
-	self:SetSize(0,0)
-	self:SizeToChildren(true,true)
-	self:Center()
-	self:SetTitle("")
-	self:UpdateUserText(UserText)
-
-	local pnx,pny = self:GetSize()
-	local cdx,cdy = self.Card:GetSize()
-	self.Card:SetPos((pnx-cdx)/2,30)
-
-	local ctrlx,ctrly = self.btnMinim:GetPos()
-	local snx,sny = self.SetNameButton:GetSize()
-	self.SetNameButton:SetPos(ctrlx-snx*1.1,(30-sny)/2)
-
-	local function roundCorner(points, cx, cy, startAngle, endAngle, radius, steps)
-		for i = 0, steps do
-			local angle = math.rad(startAngle + (endAngle - startAngle) * (i / steps))
-			local x = cx + math.cos(angle) * radius
-			local y = cy + math.sin(angle) * radius
-			table.insert(points, {x = x, y = y})
-		end
-	end
-
-	function self.Card:DrawCard(w, h, color, size, hasCorner1, roundedCorner1, hasCorner2, roundedCorner2, hasCorner3, roundedCorner3, hasCorner4, roundedCorner4)
+local function DrawCard(self, w, h, color, size, hasCorner1, roundedCorner1, hasCorner2, roundedCorner2, hasCorner3, roundedCorner3, hasCorner4, roundedCorner4)
 		local points = {}
 	
 		if hasCorner1 then
@@ -199,23 +141,103 @@ function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patch
 		surface.DrawPoly(points)
 	end
 
-	local title = Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)")
+function Wire_PunchCardUI:SetupCard(Card,Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
+	Card.DrawCard = DrawCard
+	Card.ColumnPaint = ColumnPaint
+		-- since they don't allow clicking on shapes lets just quickly write our own handler
+		local mx,my = 0,0
+		function Card:OnCursorMoved(x,y)
+			mx,my = x,y
+		end
+		function Card:OnMouseReleased(mkey)
+			local elem = self:GetChildrenInRect(mx-1,my-1,2,2)[1]
+			if not elem then return end
+			if mkey == MOUSE_LEFT then
+				if elem.DoClick then
+					elem:DoClick()
+				end
+			end
+			if mkey == MOUSE_RIGHT then
+				if elem.DoRightClick then
+					elem:DoRightClick()
+				end
+			end
+		end
+		if Writable then
+			function Card.Punch(row,col)
+				net.Start("wire_punchcard_write")
+					net.WriteEntity(Entity)
+					net.WriteUInt(col+1,16)
+					net.WriteUInt(row+1,16)
+					net.WriteUInt(1,2)
+				net.SendToServer()
+			end
+			function Card.Patch(col,row)
+				net.Start("wire_punchcard_write")
+					net.WriteEntity(Entity)
+					net.WriteUInt(col+1,16)
+					net.WriteUInt(row+1,16)
+					net.WriteUInt(2,2)
+				net.SendToServer()
+			end
+		else
+			-- noop these
+			function Card.Punch()
+			end
+			function Card.Patch()
+			end
+		end
+		function Card:SetPunched_UI(col,row)
+			if self.SetPunched then
+				self:SetPunched(col,row)
+			end
+		end
+		function Card:SetPatched_UI(col,row)
+			if self.SetPatched then
+				self:SetPatched(col,row)
+			end
+		end
+		function Card:ResetPunchState_UI(col,row)
+			if self.ResetPunchState then
+				self:ResetPunchedState(col,row)
+			end
+		end
+		-- Provide options for rendering transparently / with material.
+		Card.TransparentMaterial = screenspace
+		local renderer = self.Renderers[Model] or self.Renderers["ibm5081"]
+		local Color = Entity:GetColor()
+		if Color.r == 255 and Color.g == 255 and Color.b == 255 and Color.a == 255 then
+			Color = nil
+		end
+		renderer(Columns,Rows,Data,Patches,Card,Writable,Color)
+		if UserText and Card.UpdateUserText then
+			Card:UpdateUserText(UserText)
+		end
+end
 
-	function self:Paint(w, h)
-		surface.SetDrawColor(20, 20, 20, 64)
-		surface.DrawRect(0, 0, w, h)
-
-		draw.SimpleText(
-			title,
-			"DermaDefault",
-			w / 2,
-			15,
-			color_white,
-			TEXT_ALIGN_CENTER,
-			TEXT_ALIGN_CENTER
-		)
+-- Interprets punch card data and then opens the UI
+function Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
+	if self.Card then
+		self.Card:Remove()
 	end
+	self.Card = vgui.Create("DPanel",Wire_PunchCardUI)
+	self:SetupCard(self.Card,Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
+	self.CardEntity = Entity
+	self.Card:SizeToChildren(false,true)
+	self.Card:SetPos(2,30)
+	self.Card:SetMouseInputEnabled(true)
+	self:SetSize(0,0)
+	self:SizeToChildren(true,true)
+	self:Center()
 
+	local pnx,pny = self:GetSize()
+	local cdx,cdy = self.Card:GetSize()
+	self.Card:SetPos((pnx-cdx)/2,30)
+
+	local ctrlx,ctrly = self.btnMinim:GetPos()
+	local snx,sny = self.SetNameButton:GetSize()
+	self.SetNameButton:SetPos(ctrlx-snx*1.1,(30-sny)/2)
+	self.PCTitle = Model.." "..(Writable and "(Write Allowed)" or "(Write Disallowed)")
 	self:Show()
 	self:MakePopup()
 end

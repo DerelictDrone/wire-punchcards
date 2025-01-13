@@ -67,6 +67,12 @@ if CLIENT then
 				self.Punched = false
 				self.CustomMaterial = nil
 			end
+			function holder:ResetPunchState()
+				if t then
+					t:SetColor(black)
+				end
+				self:SetColor(overpunch and hidden or tempColor)
+			end
 			if Writable then
 				function holder:DoClick()
 					self:SetPunched()
@@ -99,14 +105,18 @@ if CLIENT then
 		if Overpunch then
 			Columns = Columns-2
 		end
-		
+		Panel.PanelRows = {}
 		local function createRows(startx,starty,xpad,ypad,columns,digitoffset,overpunch)
 			digitoffset = digitoffset or 0
 			overpunch = overpunch or false
 			for row=0,Rows-1,1 do
 				local r,p = Data[row+1],Patches[row+1]
+				if not Panel.PanelRows[row+1] then
+					Panel.PanelRows[row+1] = {}
+				end
 				for digit=0,columns-1,1 do
 					local punchable = createPunchable(digit+digitoffset,row,overpunch)
+					Panel.PanelRows[row+1][digit+digitoffset+1] = punchable
 					punchable:SetPos(x,y)
 					y = y + ysize + ypad
 					if bit.band(p,masks[digit+digitoffset+1]) > 0 then
@@ -154,6 +164,15 @@ if CLIENT then
 			x, y = startx, 5
 			starty = y
 			createRows(startx,starty,xpad,ypad,2,Columns,true)
+		end
+		function Panel:SetPunched(col,row)
+			self.PanelRows[row][col]:SetPunched()
+		end
+		function Panel:SetPatched(col,row)
+			self.PanelRows[row][col]:SetPatched()
+		end
+		function Panel:ResetPunchedState(col,row)
+			self.PanelRows[row][col]:ResetPunchedState()
 		end
 	end
 

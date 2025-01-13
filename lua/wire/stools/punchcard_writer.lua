@@ -2,16 +2,14 @@ WireToolSetup.setCategory( "Memory" )
 WireToolSetup.open( "punchcard_writer", "Punchcard Writer", "gmod_wire_punchcard_writer", nil, "Punchcard Writers" )
 
 if ( CLIENT ) then
-	language.Add( "Tool.wire_punchcard_writer.name", "Punchcard Writer(Wire)" )
-	language.Add( "Tool.wire_punchcard_writer.desc", "Spawns a Punchcard Writer!" )
 	TOOL.Information = {
-		{ name = "left", text = "Create a Punchcard Writer" },
+		{ name = "left", text = language.GetPhrase("tool.wire_punchcard_writer.left") },
 	}
 end
 WireToolSetup.BaseLang()
 WireToolSetup.SetupMax( 20 )
 
-TOOL.ClientConVar[ "model" ] = "models/props_c17/consolebox05a.mdl"
+TOOL.ClientConVar[ "model" ] = "models/props_lab/reciever01d.mdl"
 TOOL.ClientConVar[ "silent" ] = "0"
 TOOL.ClientConVar[ "mediareversible" ] = "0"
 -- if SERVER then
@@ -52,6 +50,6 @@ end
 function TOOL.BuildCPanel(panel)
 	WireToolHelpers.MakePresetControl(panel, "wire_punchcard_writer")
 	ModelPlug_AddToCPanel(panel, "PunchcardInp", "wire_punchcard_writer", nil, 4)
-	panel:CheckBox("Allow Bottom Insertion","wire_punchcard_writer_mediareversible")
-	panel:CheckBox("Silent Punching","wire_punchcard_writer_silent")
+	panel:CheckBox(language.GetPhrase("wire_punchcard.reversable"),"wire_punchcard_writer_mediareversible")
+	panel:CheckBox(language.GetPhrase("wire_punchcard.silentpunch"),"wire_punchcard_writer_silent")
 end
