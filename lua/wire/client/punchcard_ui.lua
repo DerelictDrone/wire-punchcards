@@ -259,3 +259,38 @@ net.Receive("wire_punchcard_data",function (len,ply)
 	end
 	Wire_PunchCardUI:LoadCard(Entity,Model,Writable,Columns,Rows,Data,Patches,UserText)
 end)
+
+
+if not Wire_PunchCardUI then
+	Wire_PunchCardUI = {
+		Renderers = {}
+	}
+	timer.Simple(0,function()
+	end)
+else
+	if type(Wire_PunchCardUI) == "table" then
+		return -- Loading is likely already queued, leave it to the timer.
+	end
+	Wire_PunchCardUI = createPunchCardUIElement(true)
+	load()
+end
+
+if not Wire_PunchCardUI_LoadHook then
+	local load_hooks = 0
+	-- Runs the function when the UI is ready, or runs it immediately if it's already ready.
+	function Wire_PunchCardUI_LoadHook(fn)
+		if ispanel(Wire_PunchCardUI) then
+			fn()
+			return
+		else
+			hook.Add("Wire_PunchCardUI_Loaded","UILoad_"..load_hooks,fn)
+			load_hooks = load_hooks + 1
+		end
+	end
+end
+
+hook.Add("OnGamemodeLoaded","Load_Wire_PunchCardUI",function()
+	Wire_PunchCardUI = createPunchCardUIElement(false)
+	load()
+	hook.Run("Wire_PunchCardUI_Loaded",Wire_PunchCardUI)
+end)

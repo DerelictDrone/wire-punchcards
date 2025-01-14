@@ -165,11 +165,6 @@ local function load()
 		Position = Vector((ScrW()/2)+200,(ScrH()/2)-80)
 	})
 	chapter4:AddInstruction("Delay", {Time = 0, Length = 1})
-	end
-	
-	
-	if not Wire_PunchCardUI then
-		timer.Simple(1,load)
-	else
-		load()
-	end
+end
+
+Wire_PunchCardUI_LoadHook(load)

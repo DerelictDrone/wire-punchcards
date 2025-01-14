@@ -166,10 +166,5 @@ local function load()
 	})
 	chapter4:AddInstruction("Delay", {Time = 0, Length = 1})
 	end
-	
-	
-	if not Wire_PunchCardUI then
-		timer.Simple(1,load)
-	else
-		load()
-	end
+
+Wire_PunchCardUI_LoadHook(load)
