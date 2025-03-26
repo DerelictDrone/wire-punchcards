@@ -32,7 +32,7 @@ local function load()
     chapter1:AddInstruction("Delay", {Time = 0, Length = 3})
 
     local chapter2 = storyboard:Chapter()
-    chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 1.6, Target = Vector(0, 0, 10), Angle = 20, Distance = 100, Height = 50})
+    chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 1.6, Target = Vector(0, 0, 10), Angle = 45, Distance = 100, Height = 50})
     chapter2:AddInstruction("Delay", {Time = 0, Length = 2})
 
     chapter2:AddInstruction("ChangeText", {
@@ -122,7 +122,6 @@ local function load()
         Dimension = "2D",
         Position = Vector((ScrW()/2)+200,(ScrH()/2)-80)
     })
-    chapter3:AddInstruction("Delay", {Time = 0, Length = 4})
 end
 
 Wire_PunchCardUI_LoadHook(load)

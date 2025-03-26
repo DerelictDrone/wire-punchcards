@@ -16,7 +16,7 @@ local function load()
 		Angles = Angle(90,45,0),
 		LocalTransform = false
 	})
-	chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 0.8, Target = Vector(0, 0, 10), Angle = 20, Distance = 100, Height = 50})
+	chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 0.8, Target = Vector(0, 0, 10), Angle = 45, Distance = 100, Height = 50})
 	
 	local chapter2 = storyboard:Chapter()
 	chapter2:AddInstruction("ShowText", {
@@ -28,7 +28,7 @@ local function load()
 	chapter2:AddInstruction("Delay", {Time = 0, Length = 4})
 	chapter2:AddInstruction("ChangeText", {
 		Name = "punchcard_txt",
-		Text = string.format(language.GetPhrase("wire_punchcard.ponder.card.reading.punchcard_text_2"),string.upper(input.LookupBinding("+walk")),string.upper(input.LookupBinding("+use"))),
+		Text = "wire_punchcard.ponder.card.reading.punchcard_text_2",
 	})
 	chapter2:AddInstruction("Delay", {Time = 0, Length = 4})
 	-- Punchcard entities just need a color
@@ -109,15 +109,6 @@ local function load()
 			SpaceBetween = Vector(0,50,0)
 		}
 	)
-	-- chapter3:AddInstruction("punchcard_PunchMany", {
-	-- 	Target = "punchcard_ui",
-	-- 	Mode = "SetPatched",
-	-- 	Rows = {
-	-- 		{8,3}
-	-- 	},
-	-- 	Length = 0.5,
-	-- })
-	-- chapter3:AddInstruction("Delay", {Time = 0, Length = 4})
 	chapter3:AddInstruction("Delay", {Time = 0, Length = 4})
 	local chapter4 = storyboard:Chapter()
 	chapter4:AddInstruction("Delay", {Time = 0, Length = 3})

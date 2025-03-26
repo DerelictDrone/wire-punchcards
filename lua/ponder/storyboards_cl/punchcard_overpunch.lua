@@ -16,7 +16,7 @@ local function load()
 		Angles = Angle(90,45,0),
 		LocalTransform = false
 	})
-	chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 0.8, Target = Vector(0, 0, 10), Angle = 20, Distance = 100, Height = 50})
+	chapter1:AddInstruction("MoveCameraLookAt", {Time = 0, Length = 0.8, Target = Vector(0, 0, 10), Angle = 45, Distance = 100, Height = 50})
 	
 	local chapter2 = storyboard:Chapter()
 	chapter2:AddInstruction("ShowText", {
@@ -28,7 +28,7 @@ local function load()
 	chapter2:AddInstruction("Delay", {Time = 0, Length = 4})
 	chapter2:AddInstruction("ChangeText", {
 		Name = "punchcard_txt",
-		Text = string.format(language.GetPhrase("wire_punchcard.ponder.card.overpunch.punchcard_text_2"),string.upper(input.LookupBinding("+walk")),string.upper(input.LookupBinding("+use"))),
+		Text = "wire_punchcard.ponder.card.overpunch.punchcard_text_2",
 	})
 	chapter2:AddInstruction("Delay", {Time = 0, Length = 4})
 	-- Punchcard entities just need a color
@@ -38,7 +38,6 @@ local function load()
 	function fakeEnt:GetColor()
 		return self.Color
 	end
-	chapter2:AddInstruction("ClickToolgun",{})
 	chapter2:AddInstruction("PlacePanel", {
 		Name = "punchcard_ui",
 		Type = "DPanel",
@@ -82,7 +81,6 @@ local function load()
 		PassTargetAsArgument = 1,
 	})
 	chapter2:AddInstruction("Delay", {Time = 0, Length = 3})
-	chapter2:AddInstruction("HideToolgun",{})
 	local chapter3 = storyboard:Chapter()
 	chapter3:AddInstruction("HideText", {
 		Name = "punchcard_txt",
