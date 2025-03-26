@@ -6,7 +6,6 @@ local function createPunchCardUIElement(keep)
 end
 
 local function load()
-	print("loaded?????")
 	Wire_PunchCardUI:SetDeleteOnClose(false)
 	Wire_PunchCardUI:Hide()
 	Wire_PunchCardUI.SetNameButton = Wire_PunchCardUI.SetNameButton or vgui.Create("DButton",Wire_PunchCardUI)
@@ -287,7 +286,6 @@ if not Wire_PunchCardUI_LoadHook then
 	local load_hooks = 0
 	-- Runs the function when the UI is ready, or runs it immediately if it's already ready.
 	function Wire_PunchCardUI_LoadHook(fn)
-		print("loadhook called")
 		if ispanel(Wire_PunchCardUI) then
 			fn(Wire_PunchCardUI)
 			return

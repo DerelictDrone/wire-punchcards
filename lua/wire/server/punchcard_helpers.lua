@@ -1,6 +1,5 @@
 
 function SendPunchcard(card,ply,writable)
-	print(card)
 	local Columns = card.Columns -- aka bits
 	local Rows = card.Rows
 	local Data,Patches = card.Data,card.Patches
