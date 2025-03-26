@@ -12,43 +12,26 @@ Wire_PunchCardModels["ibm5081op"] = {
 }
 
 if CLIENT then
-	local white = Color(255,255,255,255)
-	local gray = Color(128,128,128,255)
-	local black = Color(0,0,0,255)
-	local hidden = Color(0,0,0,0)
-	local card = Color(233,215,193,255)
-	local tempColor = Color(0,0,0,0)
+	local function load()
+		local white = Color(255,255,255,255)
+		local gray = Color(128,128,128,255)
+		local black = Color(0,0,0,255)
+		local hidden = Color(0,0,0,1) -- ??? I need at least 1 in alpha for it to be allowed to render after changing color
+		local card = Color(233,215,193,255)
 
-	local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable,UserColor)
-		local CardColor = UserColor or card
-		tempColor:SetUnpacked(math.min(CardColor.r*1.1,255),math.min(CardColor.g*1.1,255),math.min(CardColor.b*1.1,255),CardColor.a)
-		local cornerSize = 50
-		function Panel:Paint(w, h)
-			self:DrawCard(w, h, CardColor, cornerSize, -- Width, Height, Color, Corner Size
-			-- Enable corner?, Cut corner or round?
-				true, false,  -- Top left
-				false, false,  -- Top right
-				false, false, -- Bottom right
-				false, false  -- Bottom left
-			)
-		end
-
-		local usertextLabel = vgui.Create("DLabel",Panel)
-		usertextLabel:SetText(Panel.UserText or "")
-		usertextLabel:SetFont("PunchCard_Handwritten")
-		usertextLabel:SizeToContents()
-		usertextLabel:SetColor(black)
-		local xsize,ysize = 15,30
-		local xpad,ypad = 5,15
-		local function createPunchable(digit,row,overpunch)
-			local holder = vgui.Create("DShape",Panel)
-			holder:SetType("Rect")
-			holder:SetSize(xsize,ysize)
-			holder:SetColor(overpunch and hidden or tempColor)
-			holder.m_bSelectable = true -- Allow selection by GetChildrenInRect
-			local t
-			if not overpunch then
-				t = vgui.Create("DLabel",holder)
+		local function renderer(Overpunch,Columns,Rows,Data,Patches,Panel,Writable,UserColor)
+			local CardColor = UserColor or card
+			local tempColor = Color(0,0,0,0)
+			tempColor:SetUnpacked(math.min(CardColor.r*1.1,255),math.min(CardColor.g*1.1,255),math.min(CardColor.b*1.1,255),CardColor.a)
+			local cornerSize = 50
+			function Panel:Paint(w, h)
+				self:DrawCard(w, h, CardColor, cornerSize, -- Width, Height, Color, Corner Size
+				-- Enable corner?, Cut corner or round?
+					true, false,  -- Top left
+					false, false,  -- Top right
+					false, false, -- Bottom right
+					false, false  -- Bottom left
+				)
 			end
 			function holder:SetPunched()
 				if t then

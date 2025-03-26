@@ -21,6 +21,16 @@ util.AddNetworkString("wire_punchcard_write")
 
 net.Receive("wire_punchcard_write",function(len,ply)
 	local ent = net.ReadEntity()
+	if CPPI then
+		if not ent:CPPICanTool(ply,true) then
+			return
+		end
+	else
+		local owner = WireLib.GetOwner(ent)
+		if owner and owner ~= ply then
+			return
+		end
+	end
 	if ent and ent:IsValid() and ent:GetClass() == "gmod_wire_punchcard" then
 		local Column = net.ReadUInt(16)
 		local Row = net.ReadUInt(16)
@@ -114,6 +124,7 @@ function ENT:PunchRow(value,row,silent)
 end
 
 function ENT:Punch(column,row,silent)
+	print(column,row)
 	if column <= 0 then return end
 	if self.Data[row] then
 		local oldData = self.Data[row]
